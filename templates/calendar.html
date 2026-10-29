@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% set active_page = "calendar" %}
+
+{% block title %}Academic Calendar — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Academic Calendar & Events</h1>
+    <p class="page-subtitle">Centralized timeline of upcoming examinations, coursework deadlines, seminars, and college events.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Term 1: 2026-2027</span>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Upcoming Examinations -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Upcoming Examinations</h2>
+      <span class="badge badge-purple">Tests</span>
+    </div>
+    {% if exams %}
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for e in exams %}
+      <div style="padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-hover);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong>{{ e.title }}</strong>
+          <span class="badge badge-purple">{{ e.exam_date }}</span>
+        </div>
+        <div style="font-size: 12px; color: var(--muted);">
+          Subject: {{ e.subject_code }} - {{ e.subject_name }} · Max Marks: {{ e.max_marks }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: var(--muted); text-align: center; padding: 20px;">No scheduled examinations found.</p>
+    {% endif %}
+  </div>
+
+  <!-- Assignment Deadlines -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Assignment Due Dates</h2>
+      <span class="badge badge-warning">Deadlines</span>
+    </div>
+    {% if assignments %}
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for a in assignments %}
+      <div style="padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-hover);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong>{{ a.title }}</strong>
+          <span class="badge badge-warning">{{ a.due_date }}</span>
+        </div>
+        <div style="font-size: 12px; color: var(--muted);">
+          Subject: {{ a.subject_code }} - {{ a.subject_name }} · Max Marks: {{ a.max_marks }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: var(--muted); text-align: center; padding: 20px;">No upcoming assignment deadlines.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- College Announcements & Term Milestones -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>College Notices & Term Milestones</h2>
+    <span class="badge badge-info">Announcements</span>
+  </div>
+  {% if announcements %}
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    {% for ann in announcements %}
+    <div style="padding: 16px; border: 1px solid var(--line); border-radius: 8px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong style="font-size: 15px;">{{ ann.title }}</strong>
+        <span class="badge {% if ann.category == 'Urgent' %}badge-danger{% elif ann.category == 'Examination' %}badge-purple{% else %}badge-info{% endif %}">
+          {{ ann.category }}
+        </span>
+      </div>
+      <p style="font-size: 13px; color: var(--ink); line-height: 1.6; margin: 0 0 8px;">{{ ann.content }}</p>
+      <div style="font-size: 11px; color: var(--muted);">
+        Posted by {{ ann.author_name or 'College Administration' }} on {{ ann.created_at.strftime('%b %d, %Y') if ann.created_at else 'Recent' }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p style="color: var(--muted); text-align: center; padding: 20px;">No announcements currently posted.</p>
+  {% endif %}
+</div>
+{% endblock %}
+

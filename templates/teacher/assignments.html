@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set active_page = "assignments" %}
+
+{% block title %}Assignments Management — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Coursework & Assignment Management</h1>
+    <p class="page-subtitle">Create assignments, track student submission timestamps, evaluate coursework, and provide feedback.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" onclick="openCreateAssignModal()">+ Create Assignment</button>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Active & Completed Assignments ({{ assignments|length }})</h2>
+    <span class="badge badge-purple">Coursework</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Assignment Title</th>
+          <th>Due Date</th>
+          <th>Max Marks</th>
+          <th>Submissions Count</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+          <td><span class="badge badge-purple">{{ a.subject_code }}</span></td>
+          <td>
+            <strong>{{ a.title }}</strong>
+            <div style="font-size: 11px; color: var(--muted);">{{ a.description }}</div>
+          </td>
+          <td>{{ a.due_date }}</td>
+          <td>{{ a.max_marks }}</td>
+          <td>
+            <span class="badge badge-info">{{ a.submission_count }} Submitted</span>
+          </td>
+          <td>
+            <a href="{{ url_for('teacher_grade_assignment', assignment_id=a.id) }}" class="btn btn-secondary btn-sm">Review & Grade →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Assignment Modal -->
+<div class="modal-overlay" id="createAssignModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Create New Coursework Assignment</h2>
+      <button onclick="closeCreateAssignModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_create_assignment') }}">
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select name="subject_id" class="form-control" required>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assignment Title</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Problem Set 3 - TCP Reno Flow Control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description / Problem Statement</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Outline the questions or tasks..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Submission Instructions</label>
+        <input type="text" name="instructions" class="form-control" placeholder="e.g. Upload PDF document or GitHub repository link">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Due Date & Time</label>
+          <input type="datetime-local" name="due_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Marks</label>
+          <input type="number" step="0.5" name="max_marks" class="form-control" value="20.0" required>
+        </div>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeCreateAssignModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Post Assignment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCreateAssignModal() { document.getElementById('createAssignModal').classList.add('active'); }
+  function closeCreateAssignModal() { document.getElementById('createAssignModal').classList.remove('active'); }
+</script>
+{% endblock %}
+

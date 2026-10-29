@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Dashboard — ScholarPulse{% endblock %}
+
+{% block content %}
+{% if session.get('role') == 'teacher' %}
+  <!-- Teacher Dashboard Overview -->
+  <div class="page-title-bar">
+    <div>
+      <h1 class="page-title">Faculty Overview Dashboard</h1>
+      <p class="page-subtitle">Academic performance monitoring, class attendance, and student intervention tracking.</p>
+    </div>
+    <div class="page-actions">
+      <a href="{{ url_for('teacher_attendance') }}" class="btn btn-primary btn-sm">+ Take Attendance</a>
+      <a href="{{ url_for('teacher_assessments') }}" class="btn btn-secondary btn-sm">+ Add Assessment</a>
+      <a href="{{ url_for('teacher_reports') }}" class="btn btn-secondary btn-sm">📑 Reports</a>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-cards-grid">
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Enrolled Students</span>
+        <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">👥</div>
+      </div>
+      <div class="metric-value">{{ student_count }}</div>
+      <div class="metric-footer">Across CE & IT Departments</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Average Attendance</span>
+        <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">✓</div>
+      </div>
+      <div class="metric-value">{{ avg_attendance }}<em>%</em></div>
+      <div class="metric-footer">Last 3 months aggregate</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Class Exam Average</span>
+        <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">▥</div>
+      </div>
+      <div class="metric-value">{{ avg_marks }}<em>/100</em></div>
+      <div class="metric-footer">Published assessments</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Students at Risk</span>
+        <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">⚠️</div>
+      </div>
+      <div class="metric-value">{{ at_risk_count }}</div>
+      <div class="metric-footer">Attendance < 75% or low marks</div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout: Student Performance Records & High Risk Intervention -->
+  <div class="grid-2">
+    <!-- Student Performance Table (Backward Compatible) -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h2>Live Student Records & ML Estimate</h2>
+        <a href="{{ url_for('teacher_students') }}" class="btn btn-secondary btn-sm">View All Students →</a>
+      </div>
+      <p style="font-size: 12px; color: var(--muted); margin-top: -10px; margin-bottom: 14px;">
+        Update core scores below. The scikit-learn model updates the projected score estimate in real time.
+      </p>
+
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Math</th>
+              <th>Science</th>
+              <th>English</th>
+              <th>Att %</th>
+              <th>Study h</th>
+              <th>ML Est.</th>
+              <th>Save</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in students[:8] %}
+            <tr>
+              <form method="post" action="{{ url_for('update_student', student_id=s.id) }}">
+                <td>
+                  <strong>{{ s.full_name }}</strong>
+                  <div style="font-size: 10px; color: var(--muted);">@{{ s.username }}</div>
+                </td>
+                <td><input type="number" step="0.1" min="0" max="100" name="math_marks" value="{{ s.math_marks }}" style="width: 50px; padding: 4px; border: 1px solid var(--line); border-radius: 4px;" required></td>
+                <td><input type="number" step="0.1" min="0" max="100" name="science_marks" value="{{ s.science_marks }}" style="width: 50px; padding: 4px; border: 1px solid var(--line); border-radius: 4px;" required></td>
+                <td><input type="number" step="0.1" min="0" max="100" name="english_marks" value="{{ s.english_marks }}" style="width: 50px; padding: 4px; border: 1px solid var(--line); border-radius: 4px;" required></td>
+                <td><input type="number" step="0.1" min="0" max="100" name="attendance" value="{{ s.attendance }}" style="width: 50px; padding: 4px; border: 1px solid var(--line); border-radius: 4px;" required></td>
+                <td><input type="number" step="0.1" min="0" max="24" name="study_hours" value="{{ s.study_hours }}" style="width: 44px; padding: 4px; border: 1px solid var(--line); border-radius: 4px;" required></td>
+                <input type="hidden" name="previous_score" value="{{ s.previous_score }}">
+                <td>
+                  <span class="badge badge-purple">{{ s.prediction if s.prediction is not none else '—' }}</span>
+                </td>
+                <td>
+                  <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 8px;">Save</button>
+                </td>
+              </form>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right Column: Students Requiring Intervention & Pending Evaluations -->
+    <div>
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h2>Academic Support & Intervention Alerts</h2>
+          <span class="badge badge-warning">Action Required</span>
+        </div>
+        {% if at_risk_students %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for r in at_risk_students[:5] %}
+          <div style="padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-hover);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong>{{ r.full_name }}</strong>
+              <span class="badge {{ r.badge_class }}">{{ r.status }}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">
+              Enrollment: {{ r.enrollment_no }} · Attendance: <strong>{{ r.attendance_pct }}%</strong>
+            </div>
+            <div style="font-size: 11px; color: var(--danger);">
+              ⚠️ {{ r.reasons[0] if r.reasons else 'Academic review recommended.' }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 20px; color: var(--muted); font-size: 13px;">
+          ✓ All students are currently maintaining satisfactory attendance and academic performance.
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="dashboard-panel">
+        <div class="panel-header">
+          <h2>Pending Evaluations & Submissions</h2>
+          <span class="badge badge-info">Coursework</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 6px;">
+            <span>🔬 Practical Journal Submissions to Evaluate:</span>
+            <strong>{{ pending_practicals_count }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 6px;">
+            <span>📝 Assignment Submissions to Grade:</span>
+            <strong>{{ pending_assignments_count }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); border-radius: 6px;">
+            <span>📩 Student Attendance Correction Requests:</span>
+            <strong>{{ pending_corrections_count }}</strong>
+          </div>
+        </div>
+        <div style="margin-top: 14px;">
+          <a href="{{ url_for('teacher_practicals') }}" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center;">Review Practical Submissions →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% else %}
+  <!-- Student Dashboard Overview -->
+  <div class="page-title-bar">
+    <div>
+      <h1 class="page-title">Welcome back, {{ session.get('name', 'Student').split(' ')[0] }} 👋</h1>
+      <p class="page-subtitle">Here is your live academic summary, attendance analytics, and coursework progress.</p>
+    </div>
+    <div class="page-actions">
+      <span class="badge {{ risk.badge_class }}" style="padding: 6px 12px; font-size: 12px;">Status: {{ risk.status }}</span>
+      <a href="{{ url_for('student_ai_insights') }}" class="btn btn-primary btn-sm">✧ View AI Study Plan</a>
+    </div>
+  </div>
+
+  <!-- Overview Cards -->
+  <div class="stats-cards-grid">
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Overall Attendance</span>
+        <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">✓</div>
+      </div>
+      <div class="metric-value">{{ overall_attendance }}<em>%</em></div>
+      <div class="progress-bar-wrap">
+        <div class="progress-fill {% if overall_attendance >= 75 %}success{% elif overall_attendance >= 65 %}warning{% else %}danger{% endif %}" style="width: {{ overall_attendance }}%;"></div>
+      </div>
+      <div class="metric-footer">{{ 'Eligibility criteria satisfied (≥ 75%)' if overall_attendance >= 75 else 'Warning: Attendance below 75%' }}</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Average Score</span>
+        <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">▥</div>
+      </div>
+      <div class="metric-value">{{ average_marks }}<em>/100</em></div>
+      <div class="metric-footer">Based on published assessments</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">AI Score Estimate</span>
+        <div class="metric-icon-box" style="background:#eff6ff;color:#3b82f6;">✧</div>
+      </div>
+      <div class="metric-value">{{ prediction if prediction is not none else '—' }}<em>/100</em></div>
+      <div class="metric-footer">Trained Random Forest model</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Practicals Completed</span>
+        <div class="metric-icon-box" style="background:#fef3f2;color:#ea580c;">🔬</div>
+      </div>
+      <div class="metric-value">{{ practical_completion_pct }}<em>%</em></div>
+      <div class="progress-bar-wrap">
+        <div class="progress-fill success" style="width: {{ practical_completion_pct }}%;"></div>
+      </div>
+      <div class="metric-footer">{{ evaluated_practicals_count }} of {{ total_practicals_count }} experiments evaluated</div>
+    </div>
+
+    <div class="stat-metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Pending Coursework</span>
+        <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">📝</div>
+      </div>
+      <div class="metric-value">{{ pending_assignments_count }}</div>
+      <div class="metric-footer">Assignments due soon</div>
+    </div>
+  </div>
+
+  <!-- AI Action Banner -->
+  {% if risk.status != 'On Track' %}
+  <div class="flash-alert error" style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <strong>⚠️ Academic Alert ({{ risk.status }}):</strong>
+      <span>{{ risk.reasons[0] }}</span>
+    </div>
+    <a href="{{ url_for('student_ai_insights') }}" class="btn btn-secondary btn-sm" style="background:#fff;">Get Recovery Advice →</a>
+  </div>
+  {% endif %}
+
+  <!-- Charts Grid -->
+  <div class="grid-2">
+    <!-- Subject Wise Performance Chart -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h2>Subject Performance Breakdown</h2>
+        <span class="badge badge-purple">Published Marks</span>
+      </div>
+      <div style="height: 260px;">
+        <canvas id="studentSubjectChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Attendance by Subject Chart -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h2>Subject-wise Attendance vs 75% Benchmark</h2>
+        <span class="badge badge-info">Sessions</span>
+      </div>
+      <div style="height: 260px;">
+        <canvas id="studentAttendanceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coursework Progress & Upcoming Deadlines -->
+  <div class="grid-2">
+    <!-- Upcoming Exams & Deadlines -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h2>Upcoming Examinations & Deadlines</h2>
+        <a href="{{ url_for('view_calendar') }}" class="btn btn-secondary btn-sm">Full Calendar →</a>
+      </div>
+      {% if upcoming_events %}
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        {% for ev in upcoming_events %}
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg); border-radius: 8px;">
+          <div>
+            <strong>{{ ev.title }}</strong>
+            <div style="font-size: 11px; color: var(--muted);">{{ ev.subject }} · {{ ev.event_type }}</div>
+          </div>
+          <span class="badge badge-purple">{{ ev.date }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size: 13px; color: var(--muted); text-align: center; padding: 20px;">No upcoming exams in the next 14 days.</p>
+      {% endif %}
+    </div>
+
+    <!-- Personalized AI Study Priorities -->
+    <div class="dashboard-panel">
+      <div class="panel-header">
+        <h2>Personalized AI Study Priority</h2>
+        <a href="{{ url_for('student_ai_insights') }}" class="btn btn-secondary btn-sm">Full Recommendations →</a>
+      </div>
+      {% if ai_recommendations %}
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for rec in ai_recommendations[:2] %}
+        <div style="padding: 14px; border-left: 4px solid var(--primary); background: var(--panel-hover); border-radius: 0 8px 8px 0;">
+          <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px; color: var(--primary);">✦ {{ rec.title }}</div>
+          <div style="font-size: 12px; color: var(--ink); line-height: 1.5;">{{ rec.text }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size: 13px; color: var(--muted);">Consistent progress detected. Keep up the good work!</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // Subject Marks Chart
+    const subLabels = {{ subject_names|tojson }};
+    const subMarks = {{ subject_marks|tojson }};
+
+    new Chart(document.getElementById('studentSubjectChart'), {
+      type: 'bar',
+      data: {
+        labels: subLabels,
+        datasets: [{
+          label: 'Average Score (%)',
+          data: subMarks,
+          backgroundColor: '#5c4ee5',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        }
+      }
+    });
+
+    // Subject Attendance Chart
+    const attLabels = {{ att_subject_names|tojson }};
+    const attValues = {{ att_subject_values|tojson }};
+
+    new Chart(document.getElementById('studentAttendanceChart'), {
+      type: 'bar',
+      data: {
+        labels: attLabels,
+        datasets: [{
+          label: 'Attendance %',
+          data: attValues,
+          backgroundColor: attValues.map(v => v >= 75 ? '#12b76a' : '#f04438'),
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, max: 100 }
+        }
+      }
+    });
+  </script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% set active_page = "students" %}
+
+{% block title %}Student 360 — {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <div style="margin-bottom: 6px;">
+      <a href="{{ url_for('teacher_students') }}" style="font-size: 12px; color: var(--primary); font-weight: 600;">← Back to Students Directory</a>
+    </div>
+    <h1 class="page-title">{{ student.full_name }} — 360° Academic Record</h1>
+    <p class="page-subtitle">Enrollment: {{ profile.enrollment_no or 'N/A' }} · Department: {{ profile.dept_name or 'Computer Engineering' }} · Sem {{ profile.semester or 5 }}</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge {{ risk.badge_class }}" style="padding: 6px 14px; font-size: 13px;">{{ risk.status }}</span>
+  </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-cards-grid">
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Aggregate Attendance</span>
+      <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">✓</div>
+    </div>
+    <div class="metric-value">{{ risk.attendance_pct }}<em>%</em></div>
+    <div class="metric-footer">{{ risk.attended_sessions }} of {{ risk.total_sessions }} sessions attended</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Core Marks Average</span>
+      <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">▥</div>
+    </div>
+    <div class="metric-value">{{ ((perf.math_marks+perf.science_marks+perf.english_marks)/3)|round(1) }}<em>/100</em></div>
+    <div class="metric-footer">M: {{ perf.math_marks }}, S: {{ perf.science_marks }}, E: {{ perf.english_marks }}</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">ML Score Projection</span>
+      <div class="metric-icon-box" style="background:#eff6ff;color:#3b82f6;">✧</div>
+    </div>
+    <div class="metric-value">{{ prediction if prediction is not none else '—' }}<em>/100</em></div>
+    <div class="metric-footer">RandomForest model projection</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Daily Study Hours</span>
+      <div class="metric-icon-box" style="background:#fffaeb;color:#f79009;">⏱️</div>
+    </div>
+    <div class="metric-value">{{ perf.study_hours }}<em> hrs/day</em></div>
+    <div class="metric-footer">Previous score baseline: {{ perf.previous_score }}</div>
+  </div>
+</div>
+
+<!-- Risk Evaluation & Mentoring Notes -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Academic Health & Risk Assessment</h2>
+    <span class="badge {{ risk.badge_class }}">{{ risk.status }}</span>
+  </div>
+  <div style="font-size: 13px; line-height: 1.6;">
+    <ul style="margin: 0; padding-left: 20px;">
+      {% for r in risk.reasons %}
+      <li>{{ r }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- Published Assessments & Practicals -->
+<div class="grid-2">
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Published Assessment Results</h2>
+      <span class="badge badge-purple">Official</span>
+    </div>
+    {% if assessments %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Marks</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in assessments %}
+          <tr>
+            <td><strong>{{ a.title }}</strong></td>
+            <td><span class="badge badge-purple">{{ a.assessment_type }}</span></td>
+            <td>{{ a.marks_obtained }} / {{ a.max_marks }}</td>
+            <td><strong>{{ ((a.marks_obtained/a.max_marks)*100)|round(1) }}%</strong></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color: var(--muted); padding: 14px 0;">No assessment results published yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Laboratory Experiments Status</h2>
+      <span class="badge badge-info">Practicals</span>
+    </div>
+    {% if practicals %}
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Exp #</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Total (25)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in practicals %}
+          <tr>
+            <td><strong>#{{ p.experiment_no }}</strong></td>
+            <td>{{ p.title }}</td>
+            <td>
+              <span class="badge {% if p.status == 'Evaluated' %}badge-success{% elif p.status == 'Needs Resubmission' %}badge-danger{% else %}badge-warning{% endif %}">
+                {{ p.status }}
+              </span>
+            </td>
+            <td>{{ p.total_marks if p.status == 'Evaluated' else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p style="color: var(--muted); padding: 14px 0;">No practical records available.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

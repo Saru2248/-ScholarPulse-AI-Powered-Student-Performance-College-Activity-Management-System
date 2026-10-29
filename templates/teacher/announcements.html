@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set active_page = "announcements" %}
+
+{% block title %}Announcements — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">College Notices & Announcements</h1>
+    <p class="page-subtitle">Publish official college communications, examination notices, event dates, and urgency alerts.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" onclick="openCreateNoticeModal()">+ New Announcement</button>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Published Announcements ({{ announcements|length }})</h2>
+    <span class="badge badge-purple">Institutional Feed</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    {% for ann in announcements %}
+    <div style="padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-hover);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <strong style="font-size: 15px;">{{ ann.title }}</strong>
+        <div style="display: flex; gap: 6px;">
+          <span class="badge {% if ann.category == 'Urgent' %}badge-danger{% elif ann.category == 'Examination' %}badge-purple{% else %}badge-info{% endif %}">
+            {{ ann.category }}
+          </span>
+          <span class="badge badge-purple">Target: {{ ann.target_role|upper }}</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; line-height: 1.6; margin: 0 0 8px;">{{ ann.content }}</p>
+      <div style="font-size: 11px; color: var(--muted);">
+        Posted by {{ ann.author_name or 'Faculty' }} on {{ ann.created_at.strftime('%Y-%m-%d %H:%M') if ann.created_at else 'Recent' }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Create Notice Modal -->
+<div class="modal-overlay" id="createNoticeModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Publish Announcement</h2>
+      <button onclick="closeCreateNoticeModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_create_announcement') }}">
+      <div class="form-group">
+        <label class="form-label">Notice Title</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Mandatory Attendance Meeting" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notice Category</label>
+        <select name="category" class="form-control" required>
+          <option value="Academic">Academic</option>
+          <option value="Examination">Examination</option>
+          <option value="Urgent">Urgent</option>
+          <option value="Event">Event</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Audience</label>
+        <select name="target_role" class="form-control" required>
+          <option value="all">Everyone (All Students & Faculty)</option>
+          <option value="student">Students Only</option>
+          <option value="teacher">Faculty Only</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Content / Body</label>
+        <textarea name="content" class="form-control" rows="4" placeholder="Detailed announcement details..." required></textarea>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeCreateNoticeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Broadcast Notice</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCreateNoticeModal() { document.getElementById('createNoticeModal').classList.add('active'); }
+  function closeCreateNoticeModal() { document.getElementById('createNoticeModal').classList.remove('active'); }
+</script>
+{% endblock %}
+

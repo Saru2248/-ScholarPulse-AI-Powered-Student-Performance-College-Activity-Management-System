@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% set active_page = "assignments" %}
+
+{% block title %}Grade Submissions — {{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <div style="margin-bottom: 6px;">
+      <a href="{{ url_for('teacher_assignments') }}" style="font-size: 12px; color: var(--primary); font-weight: 600;">← Back to Assignments</a>
+    </div>
+    <h1 class="page-title">Grade Coursework: {{ assignment.title }}</h1>
+    <p class="page-subtitle">Subject: {{ assignment.subject_code }} · Due: {{ assignment.due_date }} · Max Marks: {{ assignment.max_marks }}</p>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <form method="post" action="{{ url_for('teacher_save_assignment_grades', assignment_id=assignment.id) }}">
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Submission Date</th>
+            <th>Submission Text / Deliverable</th>
+            <th>Status</th>
+            <th>Marks (Max: {{ assignment.max_marks }})</th>
+            <th>Faculty Feedback</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in submissions_roster %}
+          <tr>
+            <td>
+              <strong>{{ s.full_name }}</strong>
+              <div style="font-size: 11px; color: var(--muted);">{{ s.enrollment_no or '@' ~ s.username }}</div>
+            </td>
+            <td>
+              {% if s.submitted_at %}
+                {{ s.submitted_at.strftime('%Y-%m-%d %H:%M') }}
+                {% if s.is_late %}<span class="badge badge-danger">Late</span>{% endif %}
+              {% else %}
+                <span class="badge badge-warning">Unsubmitted</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 12px; max-width: 250px;">
+              {{ s.submission_text or '—' }}
+              {% if s.attachment_name %}
+              <div style="font-size: 11px; color: var(--primary); margin-top: 2px;">📎 {{ s.attachment_name }}</div>
+              {% endif %}
+            </td>
+            <td>
+              <select name="status_{{ s.student_id }}" class="form-control" style="width: 140px; padding: 4px 8px;">
+                <option value="Evaluated" {% if s.status == 'Evaluated' %}selected{% endif %}>Evaluated</option>
+                <option value="Needs Resubmission" {% if s.status == 'Needs Resubmission' %}selected{% endif %}>Needs Resubmission</option>
+                <option value="Submitted" {% if s.status == 'Submitted' or not s.status %}selected{% endif %}>Submitted</option>
+              </select>
+            </td>
+            <td>
+              <input type="number" step="0.5" min="0" max="{{ assignment.max_marks }}"
+                     name="marks_{{ s.student_id }}" value="{{ s.marks_obtained if s.marks_obtained is not none else '' }}"
+                     class="form-control" style="width: 90px;" placeholder="Score">
+            </td>
+            <td>
+              <input type="text" name="feedback_{{ s.student_id }}" value="{{ s.feedback or '' }}"
+                     class="form-control" placeholder="Comments" style="max-width: 220px;">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 24px; text-align: right;">
+      <button type="submit" class="btn btn-primary" style="padding: 12px 28px;">Save Coursework Grades</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

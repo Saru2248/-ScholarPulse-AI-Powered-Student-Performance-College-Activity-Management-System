@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% set active_page = "assessments" %}
+
+{% block title %}Assessments & Marks Publishing — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Examination & Marks Management</h1>
+    <p class="page-subtitle">Create unit tests, mid-semester, and internal assessments, grade student answer sheets, and control publication visibility.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" onclick="openAddAssessmentModal()">+ Create Assessment</button>
+  </div>
+</div>
+
+<!-- Assessments Table -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Assessments & Examination Schedule</h2>
+    <span class="badge badge-purple">{{ assessments|length }} Records</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Assessment Title</th>
+          <th>Subject</th>
+          <th>Type</th>
+          <th>Max Marks</th>
+          <th>Weightage</th>
+          <th>Exam Date</th>
+          <th>Student Visibility</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assessments %}
+        <tr>
+          <td><strong>{{ a.title }}</strong></td>
+          <td>{{ a.subject_code }} - {{ a.subject_name }}</td>
+          <td><span class="badge badge-purple">{{ a.assessment_type }}</span></td>
+          <td>{{ a.max_marks }}</td>
+          <td>{{ a.weightage }}%</td>
+          <td>{{ a.exam_date }}</td>
+          <td>
+            <span class="badge {% if a.is_published %}badge-success{% else %}badge-warning{% endif %}">
+              {{ 'Published' if a.is_published else 'Unpublished (Hidden)' }}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 8px;">
+              <a href="{{ url_for('teacher_grade_assessment', assessment_id=a.id) }}" class="btn btn-secondary btn-sm">Enter Marks</a>
+              <form method="post" action="{{ url_for('teacher_toggle_publish_assessment', assessment_id=a.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm {% if a.is_published %}btn-secondary{% else %}btn-primary{% endif %}">
+                  {{ 'Unpublish' if a.is_published else 'Publish to Students' }}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Assessment Modal -->
+<div class="modal-overlay" id="addAssessmentModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Schedule New Assessment</h2>
+      <button onclick="closeAddAssessmentModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_create_assessment') }}">
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select name="subject_id" class="form-control" required>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assessment Title</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Unit Test 2 - Normalization & Transactions" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Assessment Type</label>
+        <select name="assessment_type" class="form-control" required>
+          <option value="Unit Test">Unit Test</option>
+          <option value="Internal Assessment">Internal Assessment</option>
+          <option value="Mid Semester">Mid Semester</option>
+          <option value="End Semester">End Semester</option>
+          <option value="Practical Exam">Practical Exam</option>
+          <option value="Viva">Viva</option>
+          <option value="Remedial">Remedial</option>
+        </select>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Maximum Marks</label>
+          <input type="number" step="0.5" name="max_marks" class="form-control" value="25.0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Weightage (%)</label>
+          <input type="number" step="0.5" name="weightage" class="form-control" value="10.0" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Exam Date</label>
+        <input type="date" name="exam_date" class="form-control" required>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeAddAssessmentModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Assessment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddAssessmentModal() { document.getElementById('addAssessmentModal').classList.add('active'); }
+  function closeAddAssessmentModal() { document.getElementById('addAssessmentModal').classList.remove('active'); }
+</script>
+{% endblock %}
+

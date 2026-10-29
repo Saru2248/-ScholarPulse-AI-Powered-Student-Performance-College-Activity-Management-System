@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% set active_page = "queries" %}
+
+{% block title %}Ask New Academic Query — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <div style="margin-bottom: 6px;">
+      <a href="{{ url_for('student_queries') }}" style="font-size: 12px; color: var(--primary); font-weight: 600;">← Back to My Queries</a>
+    </div>
+    <h1 class="page-title">Submit Academic Query to Faculty</h1>
+    <p class="page-subtitle">Your query will be automatically assigned to the designated subject professor for Semester {{ student_profile.semester or 5 }} Division {{ student_profile.division or 'A' }}.</p>
+  </div>
+</div>
+
+<div class="dashboard-panel" style="max-width: 800px; margin: 0 auto;">
+  <div class="panel-header">
+    <h2>Query Details & Subject Mapping</h2>
+    <span class="badge badge-purple">Automatic Faculty Routing</span>
+  </div>
+
+  <div style="padding: 12px 16px; background: var(--panel-hover); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 20px; font-size: 12px; line-height: 1.6; color: var(--muted);">
+    💡 <strong>How it works:</strong> When you select a subject, ScholarPulse automatically matches and notifies the faculty assigned to teach your division. Both you and the faculty can exchange follow-up messages in real time until the query is marked <strong>Resolved</strong>.
+  </div>
+
+  <form method="post" action="{{ url_for('student_create_query') }}">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="form-group">
+        <label class="form-label">Subject <span style="color:var(--danger)">*</span></label>
+        <select name="subject_id" class="form-control" required id="subjectSelect" onchange="updateAssignedFacultyHint()">
+          <option value="">Select Enrolled Subject...</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}" data-faculty="{{ s.teacher_name or 'Subject Faculty' }}">{{ s.code }} — {{ s.name }}</option>
+          {% endfor %}
+        </select>
+        <div id="facultyHint" style="font-size: 11px; color: var(--primary); margin-top: 5px; font-weight: 600;"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Query Category <span style="color:var(--danger)">*</span></label>
+        <select name="category" class="form-control" required>
+          <option value="Academic">Academic / Theory Doubt</option>
+          <option value="Attendance">Attendance Discrepancy</option>
+          <option value="Marks">Assessment / Exam Marks</option>
+          <option value="Practical/Lab">Practical & Lab Code</option>
+          <option value="Assignment">Coursework / Assignment</option>
+          <option value="Timetable">Timetable & Schedule</option>
+          <option value="Examination">Upcoming Examination</option>
+          <option value="Technical Issue">Technical / LMS Issue</option>
+          <option value="Other">Other / General Clarification</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Query Title <span style="color:var(--danger)">*</span></label>
+      <input type="text" name="title" class="form-control" placeholder="e.g. Clarification on B+ Tree node splitting in Unit 2" minlength="5" maxlength="200" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Detailed Description / Problem Statement <span style="color:var(--danger)">*</span></label>
+      <textarea name="description" class="form-control" rows="6" placeholder="Provide complete context, specific lecture reference, formula, error log, or question details..." minlength="10" required></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Attachment Document / Reference (Optional)</label>
+      <input type="text" name="attachment_name" class="form-control" placeholder="e.g. lab_experiment_error.png or Google Drive / GitHub link">
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line);">
+      <a href="{{ url_for('student_queries') }}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="padding: 11px 24px;">Submit Query to Faculty →</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function updateAssignedFacultyHint() {
+    const sel = document.getElementById('subjectSelect');
+    const opt = sel.options[sel.selectedIndex];
+    const hint = document.getElementById('facultyHint');
+    if (opt && opt.value) {
+      hint.innerText = 'Assigned Faculty: ' + opt.getAttribute('data-faculty');
+    } else {
+      hint.innerText = '';
+    }
+  }
+</script>
+{% endblock %}
+

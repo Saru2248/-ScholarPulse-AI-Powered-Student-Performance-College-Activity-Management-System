@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% set active_page = "projects" %}
+
+{% block title %}Projects & Skills — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Projects, Capstones & Skill Portfolio</h1>
+    <p class="page-subtitle">Track project milestones, guide reviews, and verified extracurricular certifications.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" onclick="openActivityModal()">+ Add Activity / Certificate</button>
+  </div>
+</div>
+
+<!-- Project Overview Card -->
+{% if project %}
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <div>
+      <span class="badge badge-purple" style="margin-bottom: 6px;">{{ project.project_type }}</span>
+      <h2 style="font-size: 20px;">{{ project.title }}</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0;">{{ project.description }}</p>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 11px; color: var(--muted);">Faculty Guide</div>
+      <strong>{{ project.guide_name }}</strong>
+    </div>
+  </div>
+
+  <div style="margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px;">
+      <span>Overall Milestone Progress</span>
+      <span>{{ avg_progress }}%</span>
+    </div>
+    <div class="progress-bar-wrap" style="height: 10px;">
+      <div class="progress-fill success" style="width: {{ avg_progress }}%;"></div>
+    </div>
+  </div>
+
+  <!-- Team Members -->
+  <div style="margin-bottom: 24px;">
+    <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 10px;">Project Team</h3>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      {% for m in team_members %}
+      <div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 20px; font-size: 12px;">
+        <span style="font-weight: 700;">{{ m.full_name }}</span>
+        <span style="color: var(--muted);">({{ m.role_in_team }})</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Milestones Table -->
+  <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 12px;">Project Milestones</h3>
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Milestone</th>
+          <th>Target Date</th>
+          <th>Completion Date</th>
+          <th>Progress</th>
+          <th>Status</th>
+          <th>Faculty Guide Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ml in milestones %}
+        <tr>
+          <td><strong>{{ ml.milestone_name }}</strong></td>
+          <td>{{ ml.target_date }}</td>
+          <td>{{ ml.completed_date or 'In progress' }}</td>
+          <td>
+            <strong>{{ ml.progress_pct }}%</strong>
+            <div class="progress-bar-wrap" style="width: 80px;">
+              <div class="progress-fill {% if ml.progress_pct == 100 %}success{% else %}warning{% endif %}" style="width: {{ ml.progress_pct }}%;"></div>
+            </div>
+          </td>
+          <td>
+            <span class="badge {% if ml.status == 'Approved' %}badge-success{% elif ml.status == 'In Review' %}badge-info{% else %}badge-warning{% endif %}">
+              {{ ml.status }}
+            </span>
+          </td>
+          <td style="font-size: 11px;">{{ ml.guide_remarks or 'Awaiting review' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="dashboard-panel" style="text-align: center; padding: 30px;">
+  <p style="color: var(--muted); margin: 0;">You have not yet been assigned to a capstone or mini project group.</p>
+</div>
+{% endif %}
+
+<!-- Activities & Extracurricular Portfolio -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Verified Activity & Certification Portfolio</h2>
+    <span class="badge badge-success">Resume Ready</span>
+  </div>
+
+  {% if activities %}
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Activity / Certification</th>
+          <th>Category</th>
+          <th>Organizer / Issuing Authority</th>
+          <th>Date</th>
+          <th>Credential Ref</th>
+          <th>Verification</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in activities %}
+        <tr>
+          <td><strong>{{ a.title }}</strong></td>
+          <td><span class="badge badge-purple">{{ a.category }}</span></td>
+          <td>{{ a.organizer }}</td>
+          <td>{{ a.activity_date }}</td>
+          <td><code>{{ a.certificate_ref or '—' }}</code></td>
+          <td>
+            <span class="badge {% if a.verified_status == 'Verified' %}badge-success{% elif a.verified_status == 'Rejected' %}badge-danger{% else %}badge-warning{% endif %}">
+              {{ a.verified_status }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 25px; color: var(--muted);">
+    No activities or certifications registered yet. Click "+ Add Activity / Certificate" to record your achievements.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Add Activity Modal -->
+<div class="modal-overlay" id="activityModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Record Activity or Certificate</h2>
+      <button onclick="closeActivityModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('add_activity') }}">
+      <div class="form-group">
+        <label class="form-label">Activity Title</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Winner, College Hackathon 2026" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-control" required>
+          <option value="Hackathon">Hackathon</option>
+          <option value="Technical Certification">Technical Certification</option>
+          <option value="Workshop">Workshop</option>
+          <option value="Seminar">Seminar</option>
+          <option value="Sports">Sports</option>
+          <option value="Cultural">Cultural</option>
+          <option value="Extracurricular">Extracurricular</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Organizer / Institution</label>
+        <input type="text" name="organizer" class="form-control" placeholder="e.g. AWS, IEEE, AICTE, IIT..." required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date of Activity</label>
+        <input type="date" name="activity_date" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Certificate / Credential ID</label>
+        <input type="text" name="certificate_ref" class="form-control" placeholder="Optional certificate verification number">
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeActivityModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save to Portfolio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openActivityModal() {
+    document.getElementById('activityModal').classList.add('active');
+  }
+  function closeActivityModal() {
+    document.getElementById('activityModal').classList.remove('active');
+  }
+</script>
+{% endblock %}
+

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% set active_page = "practicals" %}
+
+{% block title %}Practicals & Laboratory — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Practical & Laboratory Performance</h1>
+    <p class="page-subtitle">Track experiment completion, journal submissions, viva scores, and laboratory attendance.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Semester 5 Labs</span>
+  </div>
+</div>
+
+<!-- Laboratory Stats Grid -->
+<div class="stats-cards-grid">
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Completion Progress</span>
+      <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">🔬</div>
+    </div>
+    <div class="metric-value">{{ completion_pct }}<em>%</em></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-fill success" style="width: {{ completion_pct }}%;"></div>
+    </div>
+    <div class="metric-footer">{{ evaluated_count }} of {{ total_practicals }} experiments evaluated</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Average Viva Score</span>
+      <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">💬</div>
+    </div>
+    <div class="metric-value">{{ avg_viva }}<em>/10</em></div>
+    <div class="metric-footer">Conceptual oral questions</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Execution Average</span>
+      <div class="metric-icon-box" style="background:#eff6ff;color:#3b82f6;">⚙️</div>
+    </div>
+    <div class="metric-value">{{ avg_execution }}<em>/15</em></div>
+    <div class="metric-footer">Lab coding & implementation</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Pending Resubmissions</span>
+      <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">⚠️</div>
+    </div>
+    <div class="metric-value">{{ resubmission_count }}</div>
+    <div class="metric-footer">Experiments needing revision</div>
+  </div>
+</div>
+
+<!-- Practical Experiments Table -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Continuous Laboratory Assessment Index</h2>
+    <span class="badge badge-info">Academic Year 2026-2027</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Exp #</th>
+          <th>Subject</th>
+          <th>Experiment Title</th>
+          <th>Scheduled Date</th>
+          <th>Lab Attendance</th>
+          <th>Journal</th>
+          <th>Viva (10)</th>
+          <th>Execution (15)</th>
+          <th>Total (25)</th>
+          <th>Status</th>
+          <th>Faculty Feedback</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in practicals_list %}
+        <tr>
+          <td><strong>#{{ p.experiment_no }}</strong></td>
+          <td><span class="badge badge-purple">{{ p.subject_code }}</span></td>
+          <td>
+            <strong>{{ p.title }}</strong>
+            <div style="font-size: 11px; color: var(--muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              {{ p.description }}
+            </div>
+          </td>
+          <td>{{ p.scheduled_date or '—' }}</td>
+          <td>
+            <span class="badge {% if p.lab_attendance == 'Present' %}badge-success{% else %}badge-danger{% endif %}">
+              {{ p.lab_attendance or 'Present' }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if p.journal_submitted %}badge-success{% else %}badge-warning{% endif %}">
+              {{ 'Signed' if p.journal_submitted else 'Pending' }}
+            </span>
+          </td>
+          <td>{{ p.viva_marks if p.status == 'Evaluated' else '—' }}</td>
+          <td>{{ p.execution_marks if p.status == 'Evaluated' else '—' }}</td>
+          <td>
+            {% if p.status == 'Evaluated' %}
+            <strong style="color: var(--primary);">{{ p.total_marks }}</strong>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if p.status == 'Evaluated' %}badge-success{% elif p.status == 'Submitted' %}badge-info{% elif p.status == 'Needs Resubmission' %}badge-danger{% else %}badge-warning{% endif %}">
+              {{ p.status }}
+            </span>
+          </td>
+          <td style="font-size: 11px; color: var(--ink);">{{ p.feedback or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

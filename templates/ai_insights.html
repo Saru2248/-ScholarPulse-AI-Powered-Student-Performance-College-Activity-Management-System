@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% set active_page = "ai_insights" %}
+
+{% block title %}AI Academic Insights & Assistant — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Personalized AI Academic Insights & Assistant</h1>
+    <p class="page-subtitle">Rule-based analytical guidance, risk detection, and natural language query assistant powered by authorized academic data.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge {{ insights.risk.badge_class }}" style="font-size: 13px; padding: 6px 12px;">
+      Academic Status: {{ insights.risk.status }}
+    </span>
+  </div>
+</div>
+
+<!-- Academic Risk Diagnosis -->
+<div class="dashboard-panel" style="border-left: 5px solid {% if insights.risk.status == 'On Track' %}var(--success){% elif insights.risk.status == 'Needs Attention' %}var(--warning){% else %}var(--danger){% endif %};">
+  <div class="panel-header">
+    <div>
+      <h2 style="font-size: 18px;">Academic Health Diagnostic</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0;">Evaluated against college attendance thresholds and assessment standards.</p>
+    </div>
+    <span class="badge {{ insights.risk.badge_class }}">{{ insights.risk.status }}</span>
+  </div>
+
+  <div style="font-size: 13px; line-height: 1.6; margin-bottom: 12px;">
+    <strong>Diagnostic Assessment Findings:</strong>
+    <ul style="margin: 8px 0; padding-left: 20px;">
+      {% for reason in insights.risk.reasons %}
+      <li>{{ reason }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% if insights.classes_needed > 0 %}
+  <div style="padding: 12px; background: var(--warning-bg); border: 1px solid #fedf89; border-radius: 8px; font-size: 13px; color: #b54708;">
+    <strong>⚡ Attendance Recovery Action:</strong> You must attend at least <strong>{{ insights.classes_needed }} consecutive classes</strong> without absence to restore your attendance to the 75% minimum examination eligibility threshold.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Two Columns: Recommendations & Subject Diagnostics -->
+<div class="grid-2">
+  <!-- Recommendations List -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Recommended Action Plan</h2>
+      <span class="badge badge-purple">Priority Steps</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      {% for rec in insights.recommendations %}
+      <div style="padding: 14px; background: var(--panel-hover); border: 1px solid var(--line); border-radius: 8px;">
+        <div style="font-weight: 700; color: var(--primary); font-size: 13px; margin-bottom: 4px;">✦ {{ rec.title }}</div>
+        <div style="font-size: 12px; color: var(--ink); line-height: 1.5;">{{ rec.text }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Strengths vs Weaknesses -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Strengths & Improvement Areas</h2>
+      <span class="badge badge-info">Subject Analytics</span>
+    </div>
+
+    <div style="margin-bottom: 18px;">
+      <h3 style="font-size: 13px; color: var(--success); margin-bottom: 8px;">✓ Strongest Subject Areas (≥ 75%)</h3>
+      {% if insights.strong_subjects %}
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for s in insights.strong_subjects %}
+        <span class="badge badge-success" style="font-size: 12px; padding: 6px 10px;">{{ s }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size: 12px; color: var(--muted); margin: 0;">Scores are developing across subjects.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <h3 style="font-size: 13px; color: var(--danger); margin-bottom: 8px;">⚠️ Focus Needed Areas (< 60%)</h3>
+      {% if insights.weak_subjects %}
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        {% for s in insights.weak_subjects %}
+        <span class="badge badge-danger" style="font-size: 12px; padding: 6px 10px;">{{ s }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size: 12px; color: var(--success); margin: 0;">No subjects currently below 60% average.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Natural Language Academic Assistant -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Academic Q&A Assistant</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0;">Ask questions about your personal attendance, pending practicals, exams, or scores.</p>
+    </div>
+    <span class="badge badge-purple">Deterministic AI Engine</span>
+  </div>
+
+  <!-- Prompt Suggestions -->
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('Which subject needs the most improvement?')">Focus Subject</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('How has my attendance changed and what is my percentage?')">Attendance Status</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('Which assignments and practicals are pending?')">Pending Workload</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('What should I prioritize before my next examination?')">Exam Priorities</button>
+  </div>
+
+  <div class="ai-chat-box">
+    <div class="ai-messages-area" id="chatArea">
+      <div class="chat-bubble ai">
+        Hello {{ session.get('name', 'Student').split(' ')[0] }}! I am your ScholarPulse Academic Advisor. Ask me anything regarding your attendance, published marks, lab experiments, or coursework deadlines.
+      </div>
+    </div>
+    <div class="ai-input-bar">
+      <input type="text" id="queryInput" class="form-control" placeholder="Ask a question about your academic progress..." onkeydown="if(event.key==='Enter') sendQuery()">
+      <button class="btn btn-primary" onclick="sendQuery()">Ask Advisor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setQuery(text) {
+    document.getElementById('queryInput').value = text;
+    sendQuery();
+  }
+
+  function sendQuery() {
+    const input = document.getElementById('queryInput');
+    const query = input.value.trim();
+    if (!query) return;
+
+    const chatArea = document.getElementById('chatArea');
+
+    // Add user bubble
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble user';
+    userBubble.textContent = query;
+    chatArea.appendChild(userBubble);
+
+    input.value = '';
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    // Loading indicator bubble
+    const loadingBubble = document.createElement('div');
+    loadingBubble.className = 'chat-bubble ai';
+    loadingBubble.textContent = 'Thinking...';
+    chatArea.appendChild(loadingBubble);
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    fetch('{{ url_for("api_ai_query") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query })
+    })
+    .then(r => r.json())
+    .then(data => {
+      // Format markdown bold
+      const formatted = data.response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+      loadingBubble.innerHTML = formatted;
+      chatArea.scrollTop = chatArea.scrollHeight;
+    })
+    .catch(() => {
+      loadingBubble.textContent = 'Sorry, could not process the query right now. Please try again.';
+    });
+  }
+</script>
+{% endblock %}
+

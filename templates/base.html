@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ScholarPulse — College Management & Analytics{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="brand-section">
+        <a class="brand-logo" href="{{ url_for('dashboard') }}">
+          <div class="brand-icon">SP</div>
+          <div>
+            <div>ScholarPulse</div>
+            <div style="font-size: 10px; font-weight: 500; color: var(--muted); letter-spacing: 0;">College Portal</div>
+          </div>
+        </a>
+      </div>
+
+      <div style="padding: 10px 16px;">
+        <span class="tag-demo">DEMO DATASET</span>
+      </div>
+
+      {% if session.get('role') == 'student' %}
+      <div class="nav-group-label">ACADEMIC PORTAL</div>
+      <ul class="nav-list">
+        <li><a class="nav-item-link {% if active_page == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon">▦</span> Dashboard</a></li>
+        <li><a class="nav-item-link {% if active_page == 'attendance' %}active{% endif %}" href="{{ url_for('student_attendance') }}"><span class="nav-icon">✓</span> Attendance</a></li>
+        <li><a class="nav-item-link {% if active_page == 'marks' %}active{% endif %}" href="{{ url_for('student_marks') }}"><span class="nav-icon">📊</span> Marks & Exams</a></li>
+        <li><a class="nav-item-link {% if active_page == 'practicals' %}active{% endif %}" href="{{ url_for('student_practicals') }}"><span class="nav-icon">🔬</span> Practicals & Labs</a></li>
+        <li><a class="nav-item-link {% if active_page == 'assignments' %}active{% endif %}" href="{{ url_for('student_assignments') }}"><span class="nav-icon">📝</span> Assignments</a></li>
+        <li><a class="nav-item-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('student_projects') }}"><span class="nav-icon">🚀</span> Projects & Skills</a></li>
+        <li><a class="nav-item-link {% if active_page == 'timetable' %}active{% endif %}" href="{{ url_for('view_timetable') }}"><span class="nav-icon">📅</span> Timetable</a></li>
+        <li><a class="nav-item-link {% if active_page == 'calendar' %}active{% endif %}" href="{{ url_for('view_calendar') }}"><span class="nav-icon">📌</span> Academic Calendar</a></li>
+        <li><a class="nav-item-link {% if active_page == 'queries' %}active{% endif %}" href="{{ url_for('student_queries') }}"><span class="nav-icon">💬</span> My Queries / Messages {% if unread_queries_count and unread_queries_count > 0 %}<span class="badge badge-danger" style="margin-left: auto; padding: 2px 6px; font-size: 10px;">{{ unread_queries_count }}</span>{% endif %}</a></li>
+        <li><a class="nav-item-link {% if active_page == 'ai_insights' %}active{% endif %}" href="{{ url_for('student_ai_insights') }}"><span class="nav-icon">✧</span> AI Insights & Q&A</a></li>
+        <li><a class="nav-item-link {% if active_page == 'notifications' %}active{% endif %}" href="{{ url_for('view_notifications') }}"><span class="nav-icon">🔔</span> Notifications</a></li>
+        <li><a class="nav-item-link {% if active_page == 'profile' %}active{% endif %}" href="{{ url_for('user_profile') }}"><span class="nav-icon">👤</span> My Profile</a></li>
+      </ul>
+      {% else %}
+      <div class="nav-group-label">ADMIN & FACULTY</div>
+      <ul class="nav-list">
+        <li><a class="nav-item-link {% if active_page == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon">▦</span> Dashboard</a></li>
+        <li><a class="nav-item-link {% if active_page == 'students' %}active{% endif %}" href="{{ url_for('teacher_students') }}"><span class="nav-icon">👥</span> Student 360</a></li>
+        <li><a class="nav-item-link {% if active_page == 'teachers' %}active{% endif %}" href="{{ url_for('teacher_faculty_list') }}"><span class="nav-icon">🎓</span> Faculty Directory</a></li>
+        <li><a class="nav-item-link {% if active_page == 'setup' %}active{% endif %}" href="{{ url_for('teacher_academic_setup') }}"><span class="nav-icon">⚙️</span> Academic Setup</a></li>
+        <li><a class="nav-item-link {% if active_page == 'attendance' %}active{% endif %}" href="{{ url_for('teacher_attendance') }}"><span class="nav-icon">✓</span> Attendance Entry</a></li>
+        <li><a class="nav-item-link {% if active_page == 'assessments' %}active{% endif %}" href="{{ url_for('teacher_assessments') }}"><span class="nav-icon">📊</span> Marks & Publishing</a></li>
+        <li><a class="nav-item-link {% if active_page == 'practicals' %}active{% endif %}" href="{{ url_for('teacher_practicals') }}"><span class="nav-icon">🔬</span> Practicals & Labs</a></li>
+        <li><a class="nav-item-link {% if active_page == 'assignments' %}active{% endif %}" href="{{ url_for('teacher_assignments') }}"><span class="nav-icon">📝</span> Assignments</a></li>
+        <li><a class="nav-item-link {% if active_page == 'projects' %}active{% endif %}" href="{{ url_for('teacher_projects') }}"><span class="nav-icon">🚀</span> Project Mentorship</a></li>
+        <li><a class="nav-item-link {% if active_page == 'queries' %}active{% endif %}" href="{{ url_for('teacher_queries') }}"><span class="nav-icon">💬</span> Student Queries {% if unread_queries_count and unread_queries_count > 0 %}<span class="badge badge-danger" style="margin-left: auto; padding: 2px 6px; font-size: 10px;">{{ unread_queries_count }}</span>{% endif %}</a></li>
+        <li><a class="nav-item-link {% if active_page == 'announcements' %}active{% endif %}" href="{{ url_for('teacher_announcements') }}"><span class="nav-icon">📢</span> Announcements</a></li>
+        <li><a class="nav-item-link {% if active_page == 'reports' %}active{% endif %}" href="{{ url_for('teacher_reports') }}"><span class="nav-icon">📑</span> Reports & CSV Export</a></li>
+        <li><a class="nav-item-link {% if active_page == 'ai_analytics' %}active{% endif %}" href="{{ url_for('teacher_ai_analytics') }}"><span class="nav-icon">✧</span> AI Analytics & Support</a></li>
+        <li><a class="nav-item-link {% if active_page == 'audit' %}active{% endif %}" href="{{ url_for('teacher_audit_logs') }}"><span class="nav-icon">🔒</span> Audit Logs</a></li>
+        <li><a class="nav-item-link {% if active_page == 'profile' %}active{% endif %}" href="{{ url_for('user_profile') }}"><span class="nav-icon">👤</span> My Profile</a></li>
+      </ul>
+      {% endif %}
+
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar">{{ session.get('name', 'U')[0]|upper }}</div>
+          <div class="user-details">
+            <div class="user-name">{{ session.get('name', 'User') }}</div>
+            <div class="user-role-label">{{ session.get('role', 'student')|capitalize }}</div>
+          </div>
+        </div>
+        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+          <a href="{{ url_for('user_profile') }}" style="font-size: 11px; color: var(--muted);">Profile</a>
+          <a href="{{ url_for('logout') }}" style="font-size: 11px; color: var(--danger); font-weight: 600;">Log Out ↪</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <!-- Topbar -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="mobile-nav-toggle" id="mobileNavToggle" onclick="toggleSidebar()">☰</button>
+          <div class="college-badge">🏛️ Apex Institute of Technology & Research</div>
+        </div>
+        <div class="header-right">
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light/Dark Theme" id="themeBtn">🌙</button>
+          <a href="{{ url_for('view_notifications') }}" class="btn btn-secondary btn-sm" title="Notifications">
+            🔔
+            {% if unread_notification_count and unread_notification_count > 0 %}
+            <span class="badge badge-danger" style="padding: 2px 5px; font-size: 10px;">{{ unread_notification_count }}</span>
+            {% endif %}
+          </a>
+        </div>
+      </header>
+
+      <!-- Content Container -->
+      <main class="content-body">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash-alert {{ category }}">
+                <span>{{ message }}</span>
+                <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-weight:bold;color:inherit;">✕</button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('appSidebar').classList.toggle('open');
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('sp_theme', next);
+      document.getElementById('themeBtn').innerText = next === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Initialize Theme
+    (function() {
+      const saved = localStorage.getItem('sp_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', saved);
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.innerText = saved === 'dark' ? '☀️' : '🌙';
+    })();
+  </script>
+</body>
+</html>
+

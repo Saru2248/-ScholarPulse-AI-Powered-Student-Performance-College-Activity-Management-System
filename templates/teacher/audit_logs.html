@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set active_page = "audit" %}
+
+{% block title %}Audit Logs — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Institutional Security & Audit Logs</h1>
+    <p class="page-subtitle">Immutable audit trail of sensitive academic changes, marks publications, and user administrative operations.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Compliance Standard</span>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Academic Change Log</h2>
+    <span class="badge badge-info">{{ audit_logs|length }} Events Logged</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Entity</th>
+          <th>Entity ID</th>
+          <th>Change Details</th>
+          <th>IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in audit_logs %}
+        <tr>
+          <td><code style="font-size: 11px;">{{ log.created_at }}</code></td>
+          <td>
+            <strong>{{ log.user_name }}</strong>
+            <div style="font-size: 10px; color: var(--muted);">@{{ log.username }}</div>
+          </td>
+          <td><span class="badge badge-purple">{{ log.action }}</span></td>
+          <td>{{ log.entity_type }}</td>
+          <td><code>{{ log.entity_id or '—' }}</code></td>
+          <td style="font-size: 12px; max-width: 320px;">{{ log.details }}</td>
+          <td><code style="font-size: 11px;">{{ log.ip_address or '127.0.0.1' }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

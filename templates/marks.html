@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% set active_page = "marks" %}
+
+{% block title %}Marks & Examinations — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Marks & Examination Results</h1>
+    <p class="page-subtitle">Official verified scores, internal assessments, and grade evaluations published by faculty.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Semester 5</span>
+  </div>
+</div>
+
+<!-- Marks Overview Cards -->
+<div class="stats-cards-grid">
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Weighted Average Score</span>
+      <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">📊</div>
+    </div>
+    <div class="metric-value">{{ overall_avg_pct }}<em>%</em></div>
+    <div class="metric-footer">Across all published assessments</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Evaluated Assessments</span>
+      <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">✓</div>
+    </div>
+    <div class="metric-value">{{ published_results|length }}</div>
+    <div class="metric-footer">Tests & examinations completed</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Highest Score</span>
+      <div class="metric-icon-box" style="background:#eff6ff;color:#3b82f6;">⭐</div>
+    </div>
+    <div class="metric-value">{{ highest_score }}<em>%</em></div>
+    <div class="metric-footer">{{ highest_subject or 'N/A' }}</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Focus Subject</span>
+      <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">🎯</div>
+    </div>
+    <div class="metric-value">{{ lowest_score }}<em>%</em></div>
+    <div class="metric-footer">{{ lowest_subject or 'N/A' }}</div>
+  </div>
+</div>
+
+<!-- Assessment Comparison Chart -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Subject-wise Assessment Performance</h2>
+    <span class="badge badge-purple">Internal vs Unit Tests</span>
+  </div>
+  <div style="height: 280px;">
+    <canvas id="marksAssessmentChart"></canvas>
+  </div>
+</div>
+
+<!-- Published Marks Table -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Published Assessment Records</h2>
+    <span class="badge badge-success">Official Results</span>
+  </div>
+
+  {% if published_results %}
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Assessment Title</th>
+          <th>Subject</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Max Marks</th>
+          <th>Marks Obtained</th>
+          <th>Percentage</th>
+          <th>Faculty Remarks</th>
+          <th>Published On</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in published_results %}
+        <tr>
+          <td><strong>{{ r.title }}</strong></td>
+          <td>{{ r.subject_code }} - {{ r.subject_name }}</td>
+          <td><span class="badge badge-purple">{{ r.assessment_type }}</span></td>
+          <td>{{ r.exam_date }}</td>
+          <td>{{ r.max_marks }}</td>
+          <td><strong style="color: var(--primary);">{{ r.marks_obtained }}</strong></td>
+          <td>
+            <strong>{{ r.pct }}%</strong>
+            <span class="badge {% if r.pct >= 75 %}badge-success{% elif r.pct >= 50 %}badge-warning{% else %}badge-danger{% endif %}" style="margin-left: 6px;">
+              {{ 'Distinction' if r.pct >= 75 else ('First Class' if r.pct >= 60 else ('Pass' if r.pct >= 40 else 'Fail')) }}
+            </span>
+          </td>
+          <td>{{ r.remarks or '—' }}</td>
+          <td style="font-size: 11px; color: var(--muted);">{{ r.published_at.strftime('%Y-%m-%d') if r.published_at else 'Published' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 40px; color: var(--muted);">
+    <div style="font-size: 32px; margin-bottom: 10px;">📋</div>
+    <h3>No Published Assessment Results Yet</h3>
+    <p>Your faculty has not yet published any assessment marks for this semester. Results appear here automatically once released.</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  const subjects = {{ chart_subjects|tojson }};
+  const scores = {{ chart_scores|tojson }};
+
+  new Chart(document.getElementById('marksAssessmentChart'), {
+    type: 'bar',
+    data: {
+      labels: subjects,
+      datasets: [{
+        label: 'Subject Average (%)',
+        data: scores,
+        backgroundColor: '#5c4ee5',
+        borderRadius: 8,
+        maxBarThickness: 45
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, max: 100 }
+      }
+    }
+  });
+</script>
+{% endblock %}
+

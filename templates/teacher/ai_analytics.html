@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% set active_page = "ai_analytics" %}
+
+{% block title %}AI Academic Analytics & Support — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">AI Academic Analytics & Class Monitoring</h1>
+    <p class="page-subtitle">Multi-factor academic risk diagnosis, class-level score distributions, and administrative natural language queries.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Rule Engine & ML Projections</span>
+  </div>
+</div>
+
+<!-- Class-Level Health Diagnostic -->
+<div class="grid-2">
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Class Performance Trends</h2>
+      <span class="badge badge-info">Semester 5</span>
+    </div>
+    <div style="font-size: 13px; line-height: 1.7;">
+      <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 6px; margin-bottom: 8px;">
+        <span>Total Students Monitored:</span>
+        <strong>{{ total_students }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 6px; margin-bottom: 8px;">
+        <span>Students with Shortage (< 75% Att):</span>
+        <strong style="color: var(--danger);">{{ shortage_count }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 6px; margin-bottom: 8px;">
+        <span>Students Requiring Support:</span>
+        <strong style="color: var(--warning);">{{ support_needed_count }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg); border-radius: 6px;">
+        <span>On Track Benchmark:</span>
+        <strong style="color: var(--success);">{{ on_track_count }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Faculty Mentorship Actions</h2>
+      <span class="badge badge-warning">Advisory</span>
+    </div>
+    <div style="font-size: 13px; line-height: 1.6;">
+      <p>Recommended interventions generated from continuous assessment logs:</p>
+      <ul style="margin: 0; padding-left: 20px;">
+        <li>Convene academic mentoring session for students below 75% attendance before upcoming internal assessments.</li>
+        <li>Conduct review tutorial on <strong>CS504 (Machine Learning)</strong> regarding practical experiment 3.</li>
+        <li>Follow up with overdue assignment submissions for Computer Networks.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Faculty Natural Language Query Assistant -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Faculty Analytical Assistant</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0;">Ask questions across class attendance, subject marks, pending evaluations, and at-risk students.</p>
+    </div>
+    <span class="badge badge-purple">Administrative Engine</span>
+  </div>
+
+  <!-- Prompt Suggestions -->
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('Show students whose attendance is below the configured threshold')">Attendance Shortages</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('Which subject has the lowest average marks?')">Lowest Scoring Subject</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('List practical evaluations still pending')">Pending Evaluations</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="setQuery('Summarize students requiring academic intervention')">At-Risk Summary</button>
+  </div>
+
+  <div class="ai-chat-box">
+    <div class="ai-messages-area" id="chatArea">
+      <div class="chat-bubble ai">
+        Welcome Professor. I can analyze class attendance logs, examination performance, and coursework submissions across your assigned classes. How can I assist you today?
+      </div>
+    </div>
+    <div class="ai-input-bar">
+      <input type="text" id="queryInput" class="form-control" placeholder="Ask an administrative or class analytical question..." onkeydown="if(event.key==='Enter') sendQuery()">
+      <button class="btn btn-primary" onclick="sendQuery()">Run Analytics</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setQuery(text) {
+    document.getElementById('queryInput').value = text;
+    sendQuery();
+  }
+
+  function sendQuery() {
+    const input = document.getElementById('queryInput');
+    const query = input.value.trim();
+    if (!query) return;
+
+    const chatArea = document.getElementById('chatArea');
+
+    // Add user bubble
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble user';
+    userBubble.textContent = query;
+    chatArea.appendChild(userBubble);
+
+    input.value = '';
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    const loadingBubble = document.createElement('div');
+    loadingBubble.className = 'chat-bubble ai';
+    loadingBubble.textContent = 'Analyzing class database...';
+    chatArea.appendChild(loadingBubble);
+    chatArea.scrollTop = chatArea.scrollHeight;
+
+    fetch('{{ url_for("api_ai_query") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query })
+    })
+    .then(r => r.json())
+    .then(data => {
+      const formatted = data.response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+      loadingBubble.innerHTML = formatted;
+      chatArea.scrollTop = chatArea.scrollHeight;
+    })
+    .catch(() => {
+      loadingBubble.textContent = 'Sorry, could not process the analytics query. Please try again.';
+    });
+  }
+</script>
+{% endblock %}
+

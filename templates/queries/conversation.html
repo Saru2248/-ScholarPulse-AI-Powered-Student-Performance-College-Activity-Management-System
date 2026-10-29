@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% set active_page = "queries" %}
+
+{% block title %}Query {{ query.reference_code }} — {{ query.title }}{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <div style="margin-bottom: 6px;">
+      <a href="{{ url_for('teacher_queries' if session.get('role') == 'teacher' else 'student_queries') }}" style="font-size: 12px; color: var(--primary); font-weight: 600;">
+        ← Back to {{ 'Student Queries' if session.get('role') == 'teacher' else 'My Queries' }}
+      </a>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <h1 class="page-title" style="margin: 0;">{{ query.title }}</h1>
+      <span class="badge {% if query.status == 'Resolved' %}badge-success{% elif query.status == 'In Progress' %}badge-purple{% elif query.status == 'Waiting for Student' %}badge-warning{% elif query.status == 'Unassigned' %}badge-danger{% else %}badge-info{% endif %}" style="font-size: 13px; padding: 5px 12px;">
+        {{ query.status }}
+      </span>
+    </div>
+    <p class="page-subtitle" style="margin-top: 4px;">
+      Reference: <strong>{{ query.reference_code }}</strong> · Category: <strong>{{ query.category }}</strong> · Subject: <strong>{{ query.subject_code }} ({{ query.subject_name }})</strong>
+    </p>
+  </div>
+
+  <!-- Status Control Actions -->
+  <div class="page-actions">
+    {% if session.get('role') == 'teacher' %}
+      {% if query.status != 'In Progress' and query.status != 'Resolved' %}
+      <form method="post" action="{{ url_for('update_query_status', reference_code=query.reference_code) }}" style="display:inline;">
+        <input type="hidden" name="status" value="In Progress">
+        <button type="submit" class="btn btn-secondary btn-sm">Mark In Progress</button>
+      </form>
+      {% endif %}
+
+      {% if query.status != 'Waiting for Student' and query.status != 'Resolved' %}
+      <form method="post" action="{{ url_for('update_query_status', reference_code=query.reference_code) }}" style="display:inline;">
+        <input type="hidden" name="status" value="Waiting for Student">
+        <button type="submit" class="btn btn-secondary btn-sm">Wait for Student</button>
+      </form>
+      {% endif %}
+
+      {% if query.status != 'Resolved' %}
+      <button type="button" class="btn btn-primary btn-sm" onclick="openResolveModal()" style="background:var(--success);">
+        ✓ Resolve Query
+      </button>
+      {% else %}
+      <form method="post" action="{{ url_for('reopen_query', reference_code=query.reference_code) }}" style="display:inline;">
+        <button type="submit" class="btn btn-secondary btn-sm">Reopen Query</button>
+      </form>
+      {% endif %}
+
+      <!-- Reassign option for admin or unassigned -->
+      {% if not query.assigned_faculty_id or session.get('role') == 'teacher' %}
+      <button type="button" class="btn btn-secondary btn-sm" onclick="openReassignModal()">
+        ⇄ Reassign
+      </button>
+      {% endif %}
+
+    {% else %}
+      <!-- Student Actions -->
+      {% if query.status == 'Resolved' %}
+      <form method="post" action="{{ url_for('reopen_query', reference_code=query.reference_code) }}" style="display:inline;">
+        <button type="submit" class="btn btn-secondary btn-sm">Need More Help? Reopen Query</button>
+      </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Conversation Container -->
+<div class="query-conversation-box">
+  <!-- Query Metadata Bar -->
+  <div class="query-meta-grid">
+    <div class="query-meta-item">
+      <span>Student Initiator:</span>
+      <strong>{{ query.student_name }} ({{ query.enrollment_no or '@' ~ query.student_username }})</strong>
+    </div>
+    <div class="query-meta-item">
+      <span>Assigned Faculty:</span>
+      <strong>{{ query.assigned_faculty_name or 'Unassigned (Action Needed)' }}</strong>
+    </div>
+    <div class="query-meta-item">
+      <span>Created On:</span>
+      <strong>{{ query.created_at.strftime('%b %d, %Y at %H:%M') if query.created_at else '—' }}</strong>
+    </div>
+    <div class="query-meta-item">
+      <span>Last Activity:</span>
+      <strong>{{ query.updated_at.strftime('%b %d, %Y at %H:%M') if query.updated_at else '—' }}</strong>
+    </div>
+  </div>
+
+  <!-- Resolution Banner (if resolved) -->
+  {% if query.status == 'Resolved' %}
+  <div class="resolution-notice-box">
+    <div style="font-weight: 750; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+      <span>✓ Query Marked as Resolved</span>
+      {% if query.resolved_at %}
+      <span style="font-size: 11px; opacity: 0.85;">on {{ query.resolved_at.strftime('%b %d, %Y at %H:%M') }}</span>
+      {% endif %}
+    </div>
+    {% if query.resolution_note %}
+    <div><strong>Faculty Resolution Summary:</strong> {{ query.resolution_note }}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Messages Stream -->
+  <div class="message-stream" id="messagesStream">
+    {% for msg in messages %}
+    <div class="message-card {% if msg.sender_role == 'student' %}student-message{% else %}faculty-message{% endif %} {% if msg.sender_id == session.get('user_id') %}current-user{% endif %}">
+      <div class="message-author-row">
+        <div class="message-author-avatar" style="background: {% if msg.sender_role == 'teacher' %}var(--primary){% else %}#3b82f6{% endif %};">
+          {{ msg.sender_name[0]|upper }}
+        </div>
+        <div>
+          <span class="message-author-name">{{ msg.sender_name }}</span>
+          <span class="badge {% if msg.sender_role == 'teacher' %}badge-purple{% else %}badge-info{% endif %}" style="font-size: 9px; padding: 1px 6px; margin-left: 4px;">
+            {{ 'Faculty' if msg.sender_role == 'teacher' else 'Student' }}
+          </span>
+        </div>
+        <span class="message-timestamp">
+          {{ msg.created_at.strftime('%b %d, %I:%M %p') if msg.created_at else '—' }}
+        </span>
+      </div>
+
+      <div class="message-text-body">{{ msg.message_text }}</div>
+
+      {% if msg.attachment_name %}
+      <div class="message-attachment-pill">
+        📎 Attachment: <span>{{ msg.attachment_name }}</span>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Reply Composer Area -->
+  <div class="reply-composer-area">
+    <form method="post" action="{{ url_for('post_query_message', reference_code=query.reference_code) }}" id="replyForm">
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label class="form-label" style="display: flex; justify-content: space-between;">
+          <span>{{ 'Reply to Student' if session.get('role') == 'teacher' else 'Send Message / Follow-up' }}</span>
+          <span style="font-size: 11px; color: var(--muted); font-weight: normal;">Messages are saved permanently to the conversation record.</span>
+        </label>
+        <textarea name="message_text" class="form-control" rows="4" placeholder="Type your response or follow-up question here..." required minlength="2"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 260px;">
+          <input type="text" name="attachment_name" class="form-control" placeholder="Optional document name or reference link" style="font-size: 12px; height: 38px;">
+
+          {% if session.get('role') == 'teacher' and query.status != 'Resolved' %}
+          <select name="status_update" class="form-control" style="width: 170px; font-size: 12px; height: 38px;">
+            <option value="In Progress" {% if query.status == 'In Progress' %}selected{% endif %}>Status: In Progress</option>
+            <option value="Waiting for Student" {% if query.status == 'Waiting for Student' %}selected{% endif %}>Status: Wait for Student</option>
+            <option value="Resolved">Status: Mark Resolved</option>
+          </select>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="padding: 10px 22px;">
+          Send {{ 'Reply' if session.get('role') == 'teacher' else 'Message' }} <span>→</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Resolve Query with Note (Faculty) -->
+<div class="modal-overlay" id="resolveModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Mark Query as Resolved</h2>
+      <button onclick="closeResolveModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('resolve_query', reference_code=query.reference_code) }}">
+      <div class="form-group">
+        <label class="form-label">Resolution Summary Note (Visible to Student)</label>
+        <textarea name="resolution_note" class="form-control" rows="4" placeholder="Summarize the answer, resolution, or outcome for the student..." required></textarea>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeResolveModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background:var(--success);">Confirm & Mark Resolved</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Reassign Faculty -->
+{% if session.get('role') == 'teacher' %}
+<div class="modal-overlay" id="reassignModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Reassign Subject Faculty</h2>
+      <button onclick="closeReassignModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('reassign_query', reference_code=query.reference_code) }}">
+      <div class="form-group">
+        <label class="form-label">Select Faculty Member</label>
+        <select name="faculty_id" class="form-control" required>
+          {% for f in faculty_list %}
+          <option value="{{ f.id }}" {% if query.assigned_faculty_id == f.id %}selected{% endif %}>
+            {{ f.full_name }} ({{ f.department_code or 'CE' }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeReassignModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Reassign Query</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  // Scroll message stream to bottom on load
+  const stream = document.getElementById('messagesStream');
+  if (stream) stream.scrollTop = stream.scrollHeight;
+
+  function openResolveModal() {
+    document.getElementById('resolveModal').classList.add('active');
+  }
+  function closeResolveModal() {
+    document.getElementById('resolveModal').classList.remove('active');
+  }
+
+  function openReassignModal() {
+    const modal = document.getElementById('reassignModal');
+    if (modal) modal.classList.add('active');
+  }
+  function closeReassignModal() {
+    const modal = document.getElementById('reassignModal');
+    if (modal) modal.classList.remove('active');
+  }
+</script>
+{% endblock %}
+

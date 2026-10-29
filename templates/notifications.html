@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% set active_page = "notifications" %}
+
+{% block title %}Notifications — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">In-App Notifications & Alerts</h1>
+    <p class="page-subtitle">Academic updates, published marks, lab evaluation statuses, and deadline reminders.</p>
+  </div>
+  <div class="page-actions">
+    <form method="post" action="{{ url_for('mark_all_notifications_read') }}">
+      <button type="submit" class="btn btn-secondary btn-sm">Mark All as Read</button>
+    </form>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Notification Center</h2>
+    <span class="badge badge-info">{{ notifications|length }} Total</span>
+  </div>
+
+  {% if notifications %}
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    {% for n in notifications %}
+    <div style="padding: 14px 18px; border: 1px solid var(--line); border-radius: 8px; background: {% if not n.is_read %}var(--primary-light){% else %}var(--panel){% endif %}; display: flex; justify-content: space-between; align-items: center; gap: 14px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <strong>{{ n.title }}</strong>
+          <span class="badge badge-purple">{{ n.category }}</span>
+          {% if not n.is_read %}
+          <span class="badge badge-danger" style="font-size: 9px; padding: 1px 5px;">NEW</span>
+          {% endif %}
+        </div>
+        <p style="font-size: 13px; margin: 0; color: var(--ink);">{{ n.message }}</p>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">{{ n.created_at }}</div>
+      </div>
+      <div>
+        {% if n.link %}
+        <a href="{{ n.link }}" class="btn btn-primary btn-sm">View Details →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 40px; color: var(--muted);">
+    <div style="font-size: 32px; margin-bottom: 8px;">🔔</div>
+    <h3>No Notifications Yet</h3>
+    <p>You are all caught up with your academic announcements and deadlines.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+

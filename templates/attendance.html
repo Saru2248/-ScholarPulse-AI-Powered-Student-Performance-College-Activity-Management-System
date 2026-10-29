@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% set active_page = "attendance" %}
+
+{% block title %}My Attendance — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Attendance Tracking & Policy Compliance</h1>
+    <p class="page-subtitle">Track lecture and laboratory attendance, view subject breakdown, and submit correction requests.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('export_student_attendance_csv') }}" class="btn btn-secondary btn-sm">📥 Export CSV</a>
+  </div>
+</div>
+
+<!-- Attendance Overview Cards -->
+<div class="stats-cards-grid">
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Aggregate Attendance</span>
+      <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">✓</div>
+    </div>
+    <div class="metric-value">{{ overall_att_pct }}<em>%</em></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-fill {% if overall_att_pct >= 75 %}success{% elif overall_att_pct >= 65 %}warning{% else %}danger{% endif %}" style="width: {{ overall_att_pct }}%;"></div>
+    </div>
+    <div class="metric-footer">Minimum requirement: 75.0%</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Sessions Attended</span>
+      <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">📅</div>
+    </div>
+    <div class="metric-value">{{ total_attended }}<em>/{{ total_sessions }}</em></div>
+    <div class="metric-footer">Across all subjects</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Sessions Missed</span>
+      <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">✕</div>
+    </div>
+    <div class="metric-value">{{ total_missed }}</div>
+    <div class="metric-footer">Unattended lectures / labs</div>
+  </div>
+
+  <div class="stat-metric-card">
+    <div class="metric-top">
+      <span class="metric-label">Recovery Requirement</span>
+      <div class="metric-icon-box" style="background:#fffaeb;color:#f79009;">⚡</div>
+    </div>
+    <div class="metric-value">{{ classes_needed }}</div>
+    <div class="metric-footer">{{ 'Consecutive classes needed for 75%' if classes_needed > 0 else 'Threshold already satisfied' }}</div>
+  </div>
+</div>
+
+{% if overall_att_pct < 75 %}
+<div class="flash-alert error">
+  <div>
+    <strong>⚠️ Attendance Shortage Warning:</strong>
+    Your aggregate attendance of <strong>{{ overall_att_pct }}%</strong> is below the statutory college requirement of <strong>75%</strong>.
+    You must attend the next <strong>{{ classes_needed }}</strong> consecutive sessions without absence to regain examination eligibility.
+  </div>
+</div>
+{% endif %}
+
+<!-- Subject Wise Attendance Breakdown -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Subject-wise Attendance Breakdown</h2>
+    <span class="badge badge-purple">Semester 5</span>
+  </div>
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Total Sessions</th>
+          <th>Attended</th>
+          <th>Missed</th>
+          <th>Attendance %</th>
+          <th>Status</th>
+          <th>Recovery Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in subject_attendance %}
+        <tr>
+          <td><strong>{{ s.code }}</strong></td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.total }}</td>
+          <td>{{ s.attended }}</td>
+          <td>{{ s.missed }}</td>
+          <td>
+            <strong>{{ s.pct }}%</strong>
+            <div class="progress-bar-wrap" style="width: 100px;">
+              <div class="progress-fill {% if s.pct >= 75 %}success{% elif s.pct >= 65 %}warning{% else %}danger{% endif %}" style="width: {{ s.pct }}%;"></div>
+            </div>
+          </td>
+          <td>
+            <span class="badge {% if s.pct >= 75 %}badge-success{% else %}badge-danger{% endif %}">
+              {{ 'Eligible' if s.pct >= 75 else 'Shortage' }}
+            </span>
+          </td>
+          <td>
+            {% if s.needed > 0 %}
+              <span style="color: var(--danger); font-weight: 700;">+{{ s.needed }} classes</span>
+            {% else %}
+              <span style="color: var(--success);">On track</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Attendance Sessions Log -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Recent Attendance Records</h2>
+    <span class="badge badge-info">Latest 25 Sessions</span>
+  </div>
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Subject</th>
+          <th>Session Type</th>
+          <th>Topic Covered</th>
+          <th>Faculty</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in session_records %}
+        <tr>
+          <td><strong>{{ r.session_date }}</strong></td>
+          <td>{{ r.subject_code }} - {{ r.subject_name }}</td>
+          <td><span class="badge badge-purple">{{ r.session_type }}</span></td>
+          <td>{{ r.topic_covered or '—' }}</td>
+          <td>{{ r.teacher_name }}</td>
+          <td>
+            <span class="badge {% if r.status == 'Present' %}badge-success{% elif r.status == 'Late' %}badge-warning{% elif r.status == 'Approved Leave' %}badge-info{% else %}badge-danger{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+          <td>
+            {% if r.status in ('Absent', 'Late') %}
+            <button class="btn btn-secondary btn-sm" onclick="openCorrectionModal({{ r.session_id }}, '{{ r.session_date }}', '{{ r.subject_code }}')">Correction</button>
+            {% else %}
+            <span style="color: var(--muted); font-size: 11px;">Verified</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Correction Request Modal -->
+<div class="modal-overlay" id="correctionModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Submit Attendance Correction Request</h2>
+      <button onclick="closeCorrectionModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('request_attendance_correction') }}">
+      <input type="hidden" name="session_id" id="modalSessionId">
+      <div class="form-group">
+        <label class="form-label">Session Details</label>
+        <input type="text" class="form-control" id="modalSessionInfo" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason / Justification for Correction</label>
+        <textarea name="reason" class="form-control" rows="4" placeholder="Explain the reason for absence/discrepancy (e.g. Official college event, verified medical leave, biometric error)..." required></textarea>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeCorrectionModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit for Faculty Approval</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openCorrectionModal(sessionId, sessionDate, subjectCode) {
+    document.getElementById('modalSessionId').value = sessionId;
+    document.getElementById('modalSessionInfo').value = sessionDate + ' (' + subjectCode + ')';
+    document.getElementById('correctionModal').classList.add('active');
+  }
+
+  function closeCorrectionModal() {
+    document.getElementById('correctionModal').classList.remove('active');
+  }
+</script>
+{% endblock %}
+

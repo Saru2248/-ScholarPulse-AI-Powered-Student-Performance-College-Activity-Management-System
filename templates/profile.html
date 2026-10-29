@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% set active_page = "profile" %}
+
+{% block title %}User Profile — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">User Account & Profile</h1>
+    <p class="page-subtitle">Official registration information, department details, and password security.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">{{ session.get('role')|capitalize }} Account</span>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Profile Information Panel -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Institutional Profile Details</h2>
+      <span class="badge badge-info">Verified</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 22px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 22px; font-weight: 800;">
+        {{ user.full_name[0]|upper }}
+      </div>
+      <div>
+        <h3 style="font-size: 18px; margin: 0 0 4px;">{{ user.full_name }}</h3>
+        <div style="font-size: 12px; color: var(--muted);">@{{ user.username }} · {{ user.role|title }}</div>
+      </div>
+    </div>
+
+    {% if session.get('role') == 'student' %}
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 13px;">
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Enrollment Number</div>
+        <strong>{{ profile.enrollment_no or 'N/A' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Department</div>
+        <strong>{{ profile.department_name or 'Computer Engineering' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Semester & Division</div>
+        <strong>Semester {{ profile.semester or 5 }} - Div {{ profile.division or 'A' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Academic Year</div>
+        <strong>{{ profile.academic_year or '2026-2027' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px; grid-column: span 2;">
+        <div style="font-size: 11px; color: var(--muted);">Faculty Mentor</div>
+        <strong>{{ profile.mentor_name or 'Prof. Project Teacher' }}</strong>
+      </div>
+    </div>
+    {% else %}
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 13px;">
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Employee Code</div>
+        <strong>{{ profile.employee_code or 'TCHR-001' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Department</div>
+        <strong>{{ profile.department_name or 'Computer Engineering' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Designation</div>
+        <strong>{{ profile.designation or 'Assistant Professor' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px;">
+        <div style="font-size: 11px; color: var(--muted);">Cabin / Office</div>
+        <strong>{{ profile.cabin_office or 'Block A-201' }}</strong>
+      </div>
+      <div style="padding: 10px; background: var(--bg); border-radius: 6px; grid-column: span 2;">
+        <div style="font-size: 11px; color: var(--muted);">Qualification</div>
+        <strong>{{ profile.qualification or 'M.Tech, Ph.D.' }}</strong>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Password Security Panel -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Change Password</h2>
+      <span class="badge badge-purple">Security</span>
+    </div>
+
+    <form method="post" action="{{ url_for('change_password') }}">
+      <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <input type="password" name="current_password" class="form-control" required placeholder="Enter current password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input type="password" name="new_password" class="form-control" minlength="8" required placeholder="At least 8 characters">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New Password</label>
+        <input type="password" name="confirm_password" class="form-control" minlength="8" required placeholder="Re-enter new password">
+      </div>
+      <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Update Password</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

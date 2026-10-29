@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set active_page = "teachers" %}
+
+{% block title %}Faculty Directory — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Faculty & Instructor Directory</h1>
+    <p class="page-subtitle">College professors, department heads, designations, and academic subject allocations.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">{{ teachers|length }} Faculty Members</span>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Faculty Name</th>
+          <th>Employee Code</th>
+          <th>Department</th>
+          <th>Designation</th>
+          <th>Qualification</th>
+          <th>Cabin / Office</th>
+          <th>Assigned Subjects</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in teachers %}
+        <tr>
+          <td>
+            <strong>{{ t.full_name }}</strong>
+            <div style="font-size: 11px; color: var(--muted);">@{{ t.username }}</div>
+          </td>
+          <td><code>{{ t.employee_code or 'TCHR' }}</code></td>
+          <td>{{ t.department_name or 'Computer Engineering' }}</td>
+          <td><span class="badge badge-purple">{{ t.designation }}</span></td>
+          <td style="font-size: 12px;">{{ t.qualification }}</td>
+          <td><code>{{ t.cabin_office }}</code></td>
+          <td style="font-size: 12px; font-weight: 600; color: var(--primary);">{{ t.assigned_subjects or 'Faculty Staff' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

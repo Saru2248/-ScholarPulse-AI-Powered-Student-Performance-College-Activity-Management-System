@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% set active_page = "attendance" %}
+
+{% block title %}Attendance Entry & Corrections — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Attendance Operations & Correction Review</h1>
+    <p class="page-subtitle">Record daily lecture/lab sessions, review student correction requests, and download attendance registers.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('teacher_export_attendance_csv') }}" class="btn btn-secondary btn-sm">📥 Export Class Register (CSV)</a>
+  </div>
+</div>
+
+<!-- Pending Correction Requests Panel -->
+<div class="dashboard-panel" style="border-left: 4px solid var(--warning);">
+  <div class="panel-header">
+    <div>
+      <h2>Student Attendance Correction Requests</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0;">Review student justifications for absence discrepancies before finalizing eligibility.</p>
+    </div>
+    <span class="badge badge-warning">{{ correction_requests|length }} Pending</span>
+  </div>
+
+  {% if correction_requests %}
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Session Date</th>
+          <th>Subject</th>
+          <th>Student Reason</th>
+          <th>Submitted On</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cr in correction_requests %}
+        <tr>
+          <td>
+            <strong>{{ cr.student_name }}</strong>
+            <div style="font-size: 11px; color: var(--muted);">{{ cr.enrollment_no }}</div>
+          </td>
+          <td>{{ cr.session_date }}</td>
+          <td>{{ cr.subject_code }}</td>
+          <td style="font-size: 12px; max-width: 250px;">{{ cr.reason }}</td>
+          <td style="font-size: 11px; color: var(--muted);">{{ cr.created_at.strftime('%Y-%m-%d') if cr.created_at else 'Recent' }}</td>
+          <td>
+            <div style="display: flex; gap: 6px;">
+              <form method="post" action="{{ url_for('teacher_review_correction', request_id=cr.id) }}" style="display:inline;">
+                <input type="hidden" name="action" value="Approved">
+                <button type="submit" class="btn btn-primary btn-sm" style="background:var(--success);">Approve</button>
+              </form>
+              <form method="post" action="{{ url_for('teacher_review_correction', request_id=cr.id) }}" style="display:inline;">
+                <input type="hidden" name="action" value="Rejected">
+                <button type="submit" class="btn btn-secondary btn-sm" style="color:var(--danger);">Reject</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 20px; color: var(--muted); font-size: 13px;">
+    ✓ No pending attendance correction requests from students.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Record New Attendance Session -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Record Daily Class Attendance Session</h2>
+    <span class="badge badge-purple">Session Entry</span>
+  </div>
+
+  <form method="post" action="{{ url_for('teacher_record_attendance') }}">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label">Subject</label>
+        <select name="subject_id" class="form-control" required>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label">Session Date</label>
+        <input type="date" name="session_date" class="form-control" value="{{ today_date }}" required>
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label">Session Type</label>
+        <select name="session_type" class="form-control" required>
+          <option value="Lecture">Lecture</option>
+          <option value="Practical">Practical</option>
+          <option value="Laboratory">Laboratory</option>
+          <option value="Tutorial">Tutorial</option>
+          <option value="Seminar">Seminar</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label">Topic Covered / Lecture Description</label>
+        <input type="text" name="topic_covered" class="form-control" placeholder="e.g. B-Tree Indexing and Hash Maps" required>
+      </div>
+    </div>
+
+    <div class="panel-header" style="margin-top: 10px;">
+      <h3>Student Roster (Division A)</h3>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('Present')">Mark All Present</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('Absent')">Mark All Absent</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Enrollment #</th>
+            <th>Attendance Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>
+              <strong>{{ s.full_name }}</strong>
+              <div style="font-size: 11px; color: var(--muted);">@{{ s.username }}</div>
+            </td>
+            <td><code>{{ s.enrollment_no or 'DEMO' }}</code></td>
+            <td>
+              <select name="status_{{ s.id }}" class="form-control student-status-select" style="width: 160px; padding: 6px 10px;">
+                <option value="Present" selected>Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Late">Late</option>
+                <option value="Approved Leave">Approved Leave</option>
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 24px; text-align: right;">
+      <button type="submit" class="btn btn-primary" style="padding: 12px 24px; font-size: 14px;">Confirm & Submit Attendance Session</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function markAll(status) {
+    document.querySelectorAll('.student-status-select').forEach(sel => {
+      sel.value = status;
+    });
+  }
+</script>
+{% endblock %}
+

@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% set active_page = "setup" %}
+
+{% block title %}Academic Setup — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Institutional Academic Setup & Curriculum</h1>
+    <p class="page-subtitle">Configure college departments, subject course codes, credit weightages, and laboratory requirements.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" onclick="openAddSubjectModal()">+ Add Subject</button>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Departments Panel -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>College Departments</h2>
+      <span class="badge badge-purple">{{ departments|length }} Active</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      {% for d in departments %}
+      <div style="padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-hover);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong>{{ d.name }}</strong>
+          <span class="badge badge-purple">{{ d.code }}</span>
+        </div>
+        <div style="font-size: 12px; color: var(--muted);">{{ d.description }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Attendance Threshold Configuration -->
+  <div class="dashboard-panel">
+    <div class="panel-header">
+      <h2>Institutional Attendance Threshold Policy</h2>
+      <span class="badge badge-warning">Statutory</span>
+    </div>
+    <div style="font-size: 13px; line-height: 1.6;">
+      <p>The college enforces a strict <strong>75% statutory attendance minimum</strong> for all undergraduate degree candidates.</p>
+      <div style="padding: 12px; background: var(--bg); border-radius: 8px; margin-bottom: 12px;">
+        <div><strong>Standard Minimum Requirement:</strong> 75.0%</div>
+        <div><strong>Attendance Shortage Warning Alert:</strong> &lt; 75.0%</div>
+        <div><strong>Critical Intervention Threshold:</strong> &lt; 65.0%</div>
+      </div>
+      <p style="font-size: 11px; color: var(--muted); margin: 0;">Policy applied automatically across daily lecture and practical sessions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Official College Operating Hours & Period Distribution Policy -->
+<div class="dashboard-panel" style="margin-bottom: 24px;">
+  <div class="panel-header">
+    <div>
+      <h2 style="margin: 0 0 4px 0;">Official College Operating Hours & Period Schedule Policy</h2>
+      <p style="margin: 0; font-size: 13px; color: var(--muted);">Enforced across all department timetables, student attendance registers, and academic sessions.</p>
+    </div>
+    <span class="badge badge-success">Institutional Policy</span>
+  </div>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 18px;">
+    <div style="padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 600;">College Opening Time</div>
+      <div style="font-size: 20px; font-weight: 700; color: #10b981; margin: 4px 0;">10:15 AM</div>
+      <div style="font-size: 12px; color: var(--muted);">Gate opens &amp; Slot 1 commences</div>
+    </div>
+    <div style="padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 600;">Lunch &amp; Recess Break</div>
+      <div style="font-size: 20px; font-weight: 700; color: #f59e0b; margin: 4px 0;">01:15 &ndash; 02:15 PM</div>
+      <div style="font-size: 12px; color: var(--muted);">60-minute common institutional recess</div>
+    </div>
+    <div style="padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 600;">College Closing Time</div>
+      <div style="font-size: 20px; font-weight: 700; color: #ef4444; margin: 4px 0;">05:15 PM</div>
+      <div style="font-size: 12px; color: var(--muted);">End of daily academic operations</div>
+    </div>
+    <div style="padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 600;">Total Daily Duration</div>
+      <div style="font-size: 20px; font-weight: 700; color: var(--primary); margin: 4px 0;">7.0 Hours</div>
+      <div style="font-size: 12px; color: var(--muted);">6 periods (60 min each) + 60 min lunch</div>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Slot No.</th>
+          <th>Timings</th>
+          <th>Standard Duration</th>
+          <th>Designation &amp; Purpose</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Slot 1</strong></td>
+          <td>10:15 AM &ndash; 11:15 AM</td>
+          <td>60 minutes</td>
+          <td>Morning Theory / Lab Block Part 1</td>
+          <td>First Morning Session</td>
+        </tr>
+        <tr>
+          <td><strong>Slot 2</strong></td>
+          <td>11:15 AM &ndash; 12:15 PM</td>
+          <td>60 minutes</td>
+          <td>Theory Lecture / Lab Block Part 2</td>
+          <td>Regular Session</td>
+        </tr>
+        <tr>
+          <td><strong>Slot 3</strong></td>
+          <td>12:15 PM &ndash; 01:15 PM</td>
+          <td>60 minutes</td>
+          <td>Mid-Day Theory Lecture</td>
+          <td>Pre-Lunch Lecture</td>
+        </tr>
+        <tr style="background: rgba(245, 158, 11, 0.08);">
+          <td><strong>RECESS</strong></td>
+          <td><strong>01:15 PM &ndash; 02:15 PM</strong></td>
+          <td><strong>60 minutes</strong></td>
+          <td><strong>Institutional Lunch Break</strong></td>
+          <td><span class="badge badge-warning">Campus-wide Recess</span></td>
+        </tr>
+        <tr>
+          <td><strong>Slot 4</strong></td>
+          <td>02:15 PM &ndash; 03:15 PM</td>
+          <td>60 minutes</td>
+          <td>Afternoon Theory / Lab Block Part 1</td>
+          <td>Post-Lunch Session</td>
+        </tr>
+        <tr>
+          <td><strong>Slot 5</strong></td>
+          <td>03:15 PM &ndash; 04:15 PM</td>
+          <td>60 minutes</td>
+          <td>Afternoon Theory / Lab Block Part 2</td>
+          <td>Regular Session</td>
+        </tr>
+        <tr>
+          <td><strong>Slot 6</strong></td>
+          <td>04:15 PM &ndash; 05:15 PM</td>
+          <td>60 minutes</td>
+          <td>Evening Theory / Seminar / Lab Wrap-up</td>
+          <td>College Dismissal at 05:15 PM</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Subjects List -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Academic Subjects & Syllabus Offerings</h2>
+    <span class="badge badge-info">{{ subjects|length }} Subjects</span>
+  </div>
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Department</th>
+          <th>Semester</th>
+          <th>Credits</th>
+          <th>Practical Lab</th>
+          <th>Coursework</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in subjects %}
+        <tr>
+          <td><strong>{{ s.code }}</strong></td>
+          <td>{{ s.name }}</td>
+          <td>{{ s.department_name }}</td>
+          <td>Semester {{ s.semester }}</td>
+          <td><strong>{{ s.credits }} Credits</strong></td>
+          <td><span class="badge {% if s.has_practical %}badge-success{% else %}badge-info{% endif %}">{{ 'Yes' if s.has_practical else 'No' }}</span></td>
+          <td><span class="badge {% if s.has_assignment %}badge-success{% else %}badge-info{% endif %}">{{ 'Yes' if s.has_assignment else 'No' }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Subject Modal -->
+<div class="modal-overlay" id="addSubjectModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Add New Subject</h2>
+      <button onclick="closeAddSubjectModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_add_subject') }}">
+      <div class="form-group">
+        <label class="form-label">Subject Code</label>
+        <input type="text" name="code" class="form-control" placeholder="e.g. CS508" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subject Title</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. Deep Learning & Neural Networks" required>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select name="department_id" class="form-control" required>
+            {% for d in departments %}
+            <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Semester</label>
+          <input type="number" name="semester" class="form-control" value="5" min="1" max="8" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Credits</label>
+        <input type="number" name="credits" class="form-control" value="4" min="1" max="6" required>
+      </div>
+      <div style="display: flex; gap: 20px; margin-top: 10px;">
+        <label><input type="checkbox" name="has_practical" checked> Has Laboratory Practicals</label>
+        <label><input type="checkbox" name="has_assignment" checked> Has Coursework Assignments</label>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeAddSubjectModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Subject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddSubjectModal() { document.getElementById('addSubjectModal').classList.add('active'); }
+  function closeAddSubjectModal() { document.getElementById('addSubjectModal').classList.remove('active'); }
+</script>
+{% endblock %}
+

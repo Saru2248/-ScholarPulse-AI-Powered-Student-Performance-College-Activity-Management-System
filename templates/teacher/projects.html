@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% set active_page = "projects" %}
+
+{% block title %}Project Mentorship — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Capstone & Mini Project Mentorship</h1>
+    <p class="page-subtitle">Track project groups, review milestone deliverables, and record faculty review remarks.</p>
+  </div>
+</div>
+
+{% for p in projects %}
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <div>
+      <span class="badge badge-purple" style="margin-bottom: 4px;">{{ p.project_type }}</span>
+      <h2 style="font-size: 18px;">{{ p.title }}</h2>
+      <p style="font-size: 12px; color: var(--muted); margin: 2px 0 0;">{{ p.description }}</p>
+    </div>
+    <div>
+      <span class="badge badge-info">Guide: {{ p.guide_name }}</span>
+    </div>
+  </div>
+
+  <div style="font-size: 12px; margin-bottom: 14px;">
+    <strong>Team Members:</strong>
+    <span style="color: var(--muted);">{{ p.members_str or 'Assigned students' }}</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Milestone</th>
+          <th>Target Date</th>
+          <th>Progress %</th>
+          <th>Status</th>
+          <th>Guide Review Remarks</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ml in p.milestones %}
+        <tr>
+          <form method="post" action="{{ url_for('teacher_update_milestone', milestone_id=ml.id) }}">
+            <td><strong>{{ ml.milestone_name }}</strong></td>
+            <td>{{ ml.target_date }}</td>
+            <td>
+              <input type="number" name="progress_pct" value="{{ ml.progress_pct }}" min="0" max="100" class="form-control" style="width: 70px; display:inline-block;"> %
+            </td>
+            <td>
+              <select name="status" class="form-control" style="width: 120px;">
+                <option value="Approved" {% if ml.status == 'Approved' %}selected{% endif %}>Approved</option>
+                <option value="In Review" {% if ml.status == 'In Review' %}selected{% endif %}>In Review</option>
+                <option value="Pending" {% if ml.status == 'Pending' %}selected{% endif %}>Pending</option>
+              </select>
+            </td>
+            <td>
+              <input type="text" name="guide_remarks" value="{{ ml.guide_remarks or '' }}" class="form-control" placeholder="Add feedback">
+            </td>
+            <td>
+              <button type="submit" class="btn btn-secondary btn-sm">Update</button>
+            </td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+

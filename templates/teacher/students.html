@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% set active_page = "students" %}
+
+{% block title %}Student 360 Management — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Student 360 Academic Registry</h1>
+    <p class="page-subtitle">Manage student enrollment, inspect comprehensive academic profiles, import records, and monitor progress.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 Import CSV</button>
+    <button class="btn btn-primary btn-sm" onclick="openAddStudentModal()">+ Register Student</button>
+  </div>
+</div>
+
+<!-- Search & Department Filters -->
+<div class="dashboard-panel" style="padding: 16px;">
+  <form method="get" action="{{ url_for('teacher_students') }}" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+    <div style="flex: 1; min-width: 220px;">
+      <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search by student name, username, or enrollment number...">
+    </div>
+    <div style="width: 180px;">
+      <select name="dept" class="form-control">
+        <option value="">All Departments</option>
+        <option value="CE" {% if dept_filter == 'CE' %}selected{% endif %}>Computer Engineering</option>
+        <option value="IT" {% if dept_filter == 'IT' %}selected{% endif %}>Information Technology</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if search_query or dept_filter %}
+    <a href="{{ url_for('teacher_students') }}" class="btn btn-secondary">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Students Registry Table -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Registered Students ({{ students|length }})</h2>
+    <span class="badge badge-purple">Academic Year 2026-2027</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Student Name</th>
+          <th>Enrollment #</th>
+          <th>Dept & Sem</th>
+          <th>Attendance</th>
+          <th>Core Marks (M/S/E)</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>
+            <strong>{{ s.full_name }}</strong>
+            <div style="font-size: 11px; color: var(--muted);">@{{ s.username }}</div>
+          </td>
+          <td><code>{{ s.enrollment_no or 'PENDING' }}</code></td>
+          <td>{{ s.dept_code or 'CE' }} · Sem {{ s.semester or 5 }} (Div {{ s.division or 'A' }})</td>
+          <td>
+            <strong>{{ s.attendance }}%</strong>
+            <span class="badge {% if s.attendance >= 75 %}badge-success{% else %}badge-danger{% endif %}" style="margin-left: 4px;">
+              {{ 'OK' if s.attendance >= 75 else 'Shortage' }}
+            </span>
+          </td>
+          <td>{{ s.math_marks }} / {{ s.science_marks }} / {{ s.english_marks }}</td>
+          <td>
+            <span class="badge {% if s.attendance >= 75 and (s.math_marks+s.science_marks+s.english_marks)/3 >= 60 %}badge-success{% elif s.attendance < 75 and (s.math_marks+s.science_marks+s.english_marks)/3 < 50 %}badge-danger{% else %}badge-warning{% endif %}">
+              {{ 'On Track' if s.attendance >= 75 and (s.math_marks+s.science_marks+s.english_marks)/3 >= 60 else ('Support Recommended' if s.attendance < 75 and (s.math_marks+s.science_marks+s.english_marks)/3 < 50 else 'Needs Attention') }}
+            </span>
+          </td>
+          <td>
+            <a href="{{ url_for('teacher_student_profile', student_id=s.id) }}" class="btn btn-secondary btn-sm">View 360 Profile →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Register Student Modal -->
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Register New Student Record</h2>
+      <button onclick="closeAddStudentModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_add_student') }}">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="full_name" class="form-control" placeholder="e.g. Priyanshu Dave" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" placeholder="e.g. priyanshu_d" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Initial Password (min 8 chars)</label>
+        <input type="password" name="password" class="form-control" minlength="8" value="Student@123" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Enrollment Number</label>
+        <input type="text" name="enrollment_no" class="form-control" placeholder="e.g. DEMO-2024-CE-050" required>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Department</label>
+          <select name="department_code" class="form-control" required>
+            <option value="CE">Computer Engineering</option>
+            <option value="IT">Information Technology</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Semester</label>
+          <input type="number" name="semester" class="form-control" value="5" min="1" max="8" required>
+        </div>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeAddStudentModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Student Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Import CSV Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Import Students from CSV</h2>
+      <button onclick="closeImportModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_import_students_csv') }}" enctype="multipart/form-data">
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 14px;">
+        Upload a valid CSV file with headers: <code>full_name,username,enrollment_no,department_code,semester,division</code>.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Select CSV File</label>
+        <input type="file" name="csv_file" accept=".csv" class="form-control" required>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Process Import</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddStudentModal() { document.getElementById('addStudentModal').classList.add('active'); }
+  function closeAddStudentModal() { document.getElementById('addStudentModal').classList.remove('active'); }
+  function openImportModal() { document.getElementById('importModal').classList.add('active'); }
+  function closeImportModal() { document.getElementById('importModal').classList.remove('active'); }
+</script>
+{% endblock %}
+

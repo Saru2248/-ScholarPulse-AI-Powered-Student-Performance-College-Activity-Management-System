@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% set active_page = "timetable" %}
+
+{% block title %}Timetable & Schedule — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Weekly Lecture & Laboratory Timetable</h1>
+    <p class="page-subtitle">Class schedules, laboratory blocks, room allotments, and faculty assignments for Semester 5 Division A.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Academic Year 2026-2027</span>
+  </div>
+</div>
+
+<!-- Institutional College Operating Hours Banner -->
+<div class="dashboard-panel" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(168, 85, 247, 0.06) 100%); border-left: 4px solid var(--primary); margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--primary); letter-spacing: 0.05em; margin-bottom: 4px;">Institutional Operating Schedule</div>
+      <h2 style="margin: 0 0 6px 0; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+        🏛️ Apex Institute of Technology & Research — College Hours
+      </h2>
+      <p style="margin: 0; color: var(--muted); font-size: 0.92rem;">
+        Official Timings: <strong>10:15 AM to 5:15 PM</strong> &bull; Total College Duration: <strong>7.0 Hours</strong> &bull; 6 Core Academic Slots &bull; 1-Hour Lunch Recess (01:15 PM – 02:15 PM)
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <div style="background: var(--card-bg, #ffffff); border: 1px solid var(--line, #e2e8f0); border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 95px;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--muted); font-weight: 600;">Start Time</div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: #10b981;">10:15 AM</div>
+      </div>
+      <div style="background: var(--card-bg, #ffffff); border: 1px solid var(--line, #e2e8f0); border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 120px;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--muted); font-weight: 600;">Lunch Recess</div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: #f59e0b;">01:15 – 02:15 PM</div>
+      </div>
+      <div style="background: var(--card-bg, #ffffff); border: 1px solid var(--line, #e2e8f0); border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 95px;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--muted); font-weight: 600;">End Time</div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: #ef4444;">05:15 PM</div>
+      </div>
+      <div style="background: var(--card-bg, #ffffff); border: 1px solid var(--line, #e2e8f0); border-radius: 8px; padding: 8px 14px; text-align: center; min-width: 95px;">
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--muted); font-weight: 600;">Total Duration</div>
+        <div style="font-size: 1.05rem; font-weight: 700; color: var(--primary);">7.0 Hours</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Timetable by Day -->
+{% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h2 style="margin: 0;">{{ day }}</h2>
+      <span style="font-size: 0.8rem; color: var(--muted);">10:15 AM &ndash; 05:15 PM</span>
+    </div>
+    <span class="badge badge-info">5 Scheduled Sessions</span>
+  </div>
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th style="min-width: 170px;">Time Slot</th>
+          <th>Session Type</th>
+          <th>Subject Code</th>
+          <th>Subject Name</th>
+          <th>Room / Lab</th>
+          <th>Faculty</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set day_slots = timetable_by_day.get(day, []) %}
+        {% if day_slots %}
+          {% for slot in day_slots %}
+          <tr>
+            <td>
+              <strong>{{ slot.start_time_fmt or slot.start_time }} &ndash; {{ slot.end_time_fmt or slot.end_time }}</strong>
+            </td>
+            <td>
+              <span class="badge {% if slot.session_type == 'Laboratory' or slot.session_type == 'Practical' %}badge-purple{% elif slot.session_type == 'Tutorial' or slot.session_type == 'Seminar' %}badge-warning{% else %}badge-info{% endif %}">
+                {{ slot.session_type }}
+              </span>
+            </td>
+            <td><strong>{{ slot.subject_code }}</strong></td>
+            <td>{{ slot.subject_name }}</td>
+            <td><code>{{ slot.room_number }}</code></td>
+            <td>{{ slot.teacher_name }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--muted); padding: 14px;">No sessions scheduled for {{ day }}.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

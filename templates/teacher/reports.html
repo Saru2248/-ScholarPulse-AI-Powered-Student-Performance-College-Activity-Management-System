@@ -1,0 +1,95 @@
+
+{% extends "base.html" %}
+{% set active_page = "reports" %}
+
+{% block title %}Reports & Data Export — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Institutional Reports & Data Exports</h1>
+    <p class="page-subtitle">Generate official class attendance registers, marks sheets, and intervention lists for academic review committees.</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge badge-purple">Apex Institute of Technology</span>
+  </div>
+</div>
+
+<div class="grid-3">
+  <!-- Report Card 1 -->
+  <div class="stat-metric-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div class="metric-top">
+        <span class="metric-label">ATTENDANCE REGISTER</span>
+        <div class="metric-icon-box" style="background:#ecfdf3;color:#12b76a;">✓</div>
+      </div>
+      <h3 style="font-size: 16px; margin: 0 0 6px;">Class Attendance Summary</h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Complete semester attendance register with session counts and percentage compliance.</p>
+    </div>
+    <a href="{{ url_for('teacher_export_attendance_csv') }}" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">📥 Download CSV Report</a>
+  </div>
+
+  <!-- Report Card 2 -->
+  <div class="stat-metric-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div class="metric-top">
+        <span class="metric-label">EXAMINATION MARKS</span>
+        <div class="metric-icon-box" style="background:#e0e7ff;color:#4338ca;">📊</div>
+      </div>
+      <h3 style="font-size: 16px; margin: 0 0 6px;">Subject Marks Sheet</h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Published scores across unit tests, mid-semester, and internal assessments.</p>
+    </div>
+    <a href="{{ url_for('teacher_export_marks_csv') }}" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">📥 Download CSV Report</a>
+  </div>
+
+  <!-- Report Card 3 -->
+  <div class="stat-metric-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div class="metric-top">
+        <span class="metric-label">INTERVENTION AUDIT</span>
+        <div class="metric-icon-box" style="background:#fef3f2;color:#f04438;">⚠️</div>
+      </div>
+      <h3 style="font-size: 16px; margin: 0 0 6px;">At-Risk Students List</h3>
+      <p style="font-size: 12px; color: var(--muted); margin: 0 0 14px;">Students flagged for attendance shortage (< 75%) or low assessment averages.</p>
+    </div>
+    <a href="{{ url_for('teacher_export_at_risk_csv') }}" class="btn btn-primary btn-sm" style="width: 100%; justify-content: center;">📥 Download CSV Report</a>
+  </div>
+</div>
+
+<!-- Preview Table: At-Risk Students Summary -->
+<div class="dashboard-panel" style="margin-top: 24px;">
+  <div class="panel-header">
+    <h2>Academic Support Intervention Roster Preview</h2>
+    <span class="badge badge-warning">{{ at_risk_list|length }} Flagged Students</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Enrollment #</th>
+          <th>Department</th>
+          <th>Attendance</th>
+          <th>Core Marks Avg</th>
+          <th>Status</th>
+          <th>Primary Concern</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in at_risk_list %}
+        <tr>
+          <td><strong>{{ s.full_name }}</strong></td>
+          <td><code>{{ s.enrollment_no or 'DEMO' }}</code></td>
+          <td>{{ s.department_code or 'CE' }}</td>
+          <td><strong>{{ s.attendance_pct }}%</strong></td>
+          <td>{{ s.core_marks_avg }} / 100</td>
+          <td><span class="badge {{ s.badge_class }}">{{ s.status }}</span></td>
+          <td style="font-size: 11px; color: var(--danger);">{{ s.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

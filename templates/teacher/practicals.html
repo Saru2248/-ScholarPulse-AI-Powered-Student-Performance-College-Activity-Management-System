@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% set active_page = "practicals" %}
+
+{% block title %}Practicals & Laboratory Evaluation — ScholarPulse{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <h1 class="page-title">Practical Experiments & Lab Assessment</h1>
+    <p class="page-subtitle">Define laboratory experiments, verify student code execution and journals, and record viva scores.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" onclick="openAddPracModal()">+ New Lab Experiment</button>
+  </div>
+</div>
+
+<!-- Experiments List -->
+<div class="dashboard-panel">
+  <div class="panel-header">
+    <h2>Continuous Laboratory Index ({{ practicals|length }} Experiments)</h2>
+    <span class="badge badge-purple">Lab Evaluation</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Exp #</th>
+          <th>Subject</th>
+          <th>Experiment Title</th>
+          <th>Scheduled Date</th>
+          <th>Max Marks</th>
+          <th>Pending Evaluations</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in practicals %}
+        <tr>
+          <td><strong>#{{ p.experiment_no }}</strong></td>
+          <td><span class="badge badge-purple">{{ p.subject_code }}</span></td>
+          <td>
+            <strong>{{ p.title }}</strong>
+            <div style="font-size: 11px; color: var(--muted);">{{ p.description }}</div>
+          </td>
+          <td>{{ p.scheduled_date or '—' }}</td>
+          <td>{{ p.max_marks }}</td>
+          <td>
+            {% if p.pending_count > 0 %}
+            <span class="badge badge-warning">{{ p.pending_count }} Submissions to Check</span>
+            {% else %}
+            <span class="badge badge-success">All Evaluated</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('teacher_evaluate_practical', practical_id=p.id) }}" class="btn btn-secondary btn-sm">Evaluate Batch →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Experiment Modal -->
+<div class="modal-overlay" id="addPracModal">
+  <div class="modal-card">
+    <div class="panel-header">
+      <h2>Create New Laboratory Experiment</h2>
+      <button onclick="closeAddPracModal()" style="background:none;border:none;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <form method="post" action="{{ url_for('teacher_create_practical') }}">
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <select name="subject_id" class="form-control" required>
+          {% for s in subjects %}
+          {% if s.has_practical %}
+          <option value="{{ s.id }}">{{ s.code }} - {{ s.name }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display: grid; grid-template-columns: 100px 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Exp #</label>
+          <input type="number" name="experiment_no" class="form-control" value="5" min="1" max="25" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Experiment Title</label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. MapReduce Cluster Benchmarking" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Experiment Objective & Description</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Explain objective, tools required, and output expected..."></textarea>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Scheduled Date</label>
+          <input type="date" name="scheduled_date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Marks</label>
+          <input type="number" step="0.5" name="max_marks" class="form-control" value="25.0" required>
+        </div>
+      </div>
+      <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="closeAddPracModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Publish Experiment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openAddPracModal() { document.getElementById('addPracModal').classList.add('active'); }
+  function closeAddPracModal() { document.getElementById('addPracModal').classList.remove('active'); }
+</script>
+{% endblock %}
+

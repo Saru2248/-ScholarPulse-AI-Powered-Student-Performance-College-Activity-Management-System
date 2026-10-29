@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% set active_page = "assessments" %}
+
+{% block title %}Grade Assessment — {{ assessment.title }}{% endblock %}
+
+{% block content %}
+<div class="page-title-bar">
+  <div>
+    <div style="margin-bottom: 6px;">
+      <a href="{{ url_for('teacher_assessments') }}" style="font-size: 12px; color: var(--primary); font-weight: 600;">← Back to Assessments</a>
+    </div>
+    <h1 class="page-title">Grade Assessment: {{ assessment.title }}</h1>
+    <p class="page-subtitle">Subject: {{ assessment.subject_code }} - {{ assessment.subject_name }} · Max Marks: <strong>{{ assessment.max_marks }}</strong> · Exam Date: {{ assessment.exam_date }}</p>
+  </div>
+  <div class="page-actions">
+    <span class="badge {% if assessment.is_published %}badge-success{% else %}badge-warning{% endif %}">
+      {{ 'Currently Published' if assessment.is_published else 'Unpublished (Draft)' }}
+    </span>
+  </div>
+</div>
+
+<div class="dashboard-panel">
+  <form method="post" action="{{ url_for('teacher_save_assessment_grades', assessment_id=assessment.id) }}">
+    <div class="table-responsive">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <th>Enrollment #</th>
+            <th>Marks Obtained (Max: {{ assessment.max_marks }})</th>
+            <th>Faculty Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students_roster %}
+          <tr>
+            <td>
+              <strong>{{ s.full_name }}</strong>
+              <div style="font-size: 11px; color: var(--muted);">@{{ s.username }}</div>
+            </td>
+            <td><code>{{ s.enrollment_no or 'DEMO' }}</code></td>
+            <td>
+              <input type="number" step="0.5" min="0" max="{{ assessment.max_marks }}"
+                     name="marks_{{ s.id }}" value="{{ s.marks_obtained if s.marks_obtained is not none else '' }}"
+                     class="form-control" style="width: 120px;" placeholder="Score">
+            </td>
+            <td>
+              <input type="text" name="remarks_{{ s.id }}" value="{{ s.remarks or '' }}"
+                     class="form-control" placeholder="e.g. Well answered / Needs revision" style="max-width: 320px;">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 12px; color: var(--muted);">Scores are saved immediately to the audit log upon submission.</span>
+      <button type="submit" class="btn btn-primary" style="padding: 12px 28px;">Save All Marks</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

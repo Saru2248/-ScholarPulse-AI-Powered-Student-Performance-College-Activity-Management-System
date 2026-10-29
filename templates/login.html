@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ScholarPulse — College Management & Analytics Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .auth-body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-wrapper {
+      width: 100%;
+      max-width: 980px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    .auth-hero {
+      background: linear-gradient(135deg, #1e1b4b, #312e81 60%, #4f46e5);
+      color: #fff;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .auth-card-body {
+      padding: 40px;
+    }
+    @media (max-width: 768px) {
+      .auth-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .auth-hero {
+        display: none;
+      }
+      .auth-card-body {
+        padding: 24px;
+      }
+    }
+    .credential-box {
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--panel-hover);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .credential-box code {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="auth-body">
+  <div class="auth-wrapper">
+    <!-- Left Hero Panel -->
+    <div class="auth-hero">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+          <div class="brand-icon">SP</div>
+          <span style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">ScholarPulse</span>
+        </div>
+        <div style="font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: #a5b4fc; font-weight: 700; margin-bottom: 12px;">
+          Apex Institute of Technology & Research
+        </div>
+        <h1 style="font-size: 32px; font-weight: 800; line-height: 1.2; margin: 0 0 16px;">
+          Modern AI-Powered College Management Platform
+        </h1>
+        <p style="color: #c7d2fe; font-size: 14px; line-height: 1.6;">
+          Centralizing academics, real-time attendance, practical evaluations, coursework, timetable schedules, and machine-learning performance analytics.
+        </p>
+      </div>
+
+      <div>
+        <div style="display: flex; gap: 20px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 20px;">
+          <div>
+            <div style="font-size: 20px; font-weight: 800;">30+</div>
+            <div style="font-size: 11px; color: #c7d2fe;">Students Enrolled</div>
+          </div>
+          <div>
+            <div style="font-size: 20px; font-weight: 800;">6+</div>
+            <div style="font-size: 11px; color: #c7d2fe;">Faculty Mentors</div>
+          </div>
+          <div>
+            <div style="font-size: 20px; font-weight: 800;">AI Engine</div>
+            <div style="font-size: 11px; color: #c7d2fe;">Risk Analytics</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Login / Register Card -->
+    <div class="auth-card-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span class="badge badge-purple">{{ 'REGISTER ACCOUNT' if mode == 'register' else 'LOGIN PORTAL' }}</span>
+        <span class="tag-demo">DEMO DATASET</span>
+      </div>
+      <h2 style="font-size: 24px; font-weight: 800; margin: 0 0 6px;">
+        {{ 'Create Student Account' if mode == 'register' else 'Sign In to Your Account' }}
+      </h2>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 20px;">
+        {{ 'Enter your details to create a student profile.' if mode == 'register' else 'Single sign-on for both Students and Faculty/Admin.' }}
+      </p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash-alert {{ category }}" style="margin-bottom: 16px;">
+              <span>{{ message }}</span>
+              <button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-weight:bold;color:inherit;">✕</button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('register') if mode == 'register' else url_for('login') }}">
+        {% if mode == 'register' %}
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control" placeholder="e.g. Aditi Sharma" required>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control" autocomplete="username" placeholder="e.g. student or teacher" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}" placeholder="{{ 'Minimum 8 characters' if mode == 'register' else 'Enter password' }}" minlength="{{ 8 if mode == 'register' else 1 }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 8px; font-size: 14px;">
+          {{ 'Create Student Account' if mode == 'register' else 'Login Securely →' }}
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 18px; font-size: 12px; color: var(--muted);">
+        {% if mode == 'register' %}
+        Already have an account? <a href="{{ url_for('login') }}" style="color: var(--primary); font-weight: 700;">Log In</a>
+        {% else %}
+        New student? <a href="{{ url_for('register') }}" style="color: var(--primary); font-weight: 700;">Register Account</a>
+        {% endif %}
+      </div>
+
+      <!-- Quick Demo Credentials Box -->
+      <div class="credential-box">
+        <strong style="color: var(--ink);">Demo Credentials (Click to fill or type):</strong>
+        <div style="margin-top: 6px;">
+          <strong>Student Demo:</strong> User: <code>student</code> · Pass: <code>Student@123</code><br>
+          <span style="color: var(--muted); font-size: 10px;">(Other demo students: <code>aditi</code>, <code>rahul</code> · Pass: <code>Student@123</code>)</span>
+        </div>
+        <div style="margin-top: 6px;">
+          <strong>Faculty / Admin Demo:</strong> User: <code>teacher</code> · Pass: <code>Teacher@123</code><br>
+          <span style="color: var(--muted); font-size: 10px;">(Other faculty: <code>dr_sharma</code>, <code>prof_patel</code> · Pass: <code>Teacher@123</code>)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
