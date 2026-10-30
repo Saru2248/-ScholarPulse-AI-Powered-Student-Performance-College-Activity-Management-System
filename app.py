@@ -278,9 +278,9 @@ def dashboard():
         FROM attendance_records WHERE student_id=%s
     """, (uid,))
     att_row = cur.fetchone()
-    total_sess = att_row["total"] if att_row and att_row["total"] else 0
-    attended_sess = att_row["attended"] if att_row and att_row["attended"] else 0
-    overall_att = round(attended_sess / total_sess * 100, 1) if total_sess > 0 else values["attendance"]
+    total_sess = int(att_row["total"] or 0) if att_row else 0
+    attended_sess = int(att_row["attended"] or 0) if att_row else 0
+    overall_att = round(attended_sess / total_sess * 100, 1) if total_sess > 0 else float(values["attendance"])
 
     # Subject-wise marks & attendance for charts
     cur.execute("""
@@ -309,7 +309,7 @@ def dashboard():
     """, (uid,))
     att_subs = cur.fetchall()
     att_subject_names = [s["code"] for s in att_subs] or ["CS501", "CS502", "CS504"]
-    att_subject_values = [round(s["attended"] / s["total"] * 100, 1) if s["total"] > 0 else 100.0 for s in att_subs] or [values["attendance"], values["attendance"], values["attendance"]]
+    att_subject_values = [round(float(s["attended"] or 0) / float(s["total"] or 1) * 100, 1) if s["total"] else 100.0 for s in att_subs] or [values["attendance"], values["attendance"], values["attendance"]]
 
     # Practicals stats
     cur.execute("""
@@ -318,8 +318,8 @@ def dashboard():
         FROM practical_submissions WHERE student_id=%s
     """, (uid,))
     prac_row = cur.fetchone()
-    total_prac = prac_row["total"] if prac_row and prac_row["total"] else 0
-    eval_prac = prac_row["evaluated"] if prac_row and prac_row["evaluated"] else 0
+    total_prac = int(prac_row["total"] or 0) if prac_row else 0
+    eval_prac = int(prac_row["evaluated"] or 0) if prac_row else 0
     prac_pct = round(eval_prac / total_prac * 100, 1) if total_prac > 0 else 0
 
     # Pending assignments
@@ -382,8 +382,8 @@ def student_attendance():
         FROM attendance_records WHERE student_id=%s
     """, (uid,))
     att_row = cur.fetchone()
-    total_sess = att_row["total"] if att_row and att_row["total"] else 0
-    attended_sess = att_row["attended"] if att_row and att_row["attended"] else 0
+    total_sess = int(att_row["total"] or 0) if att_row else 0
+    attended_sess = int(att_row["attended"] or 0) if att_row else 0
     missed_sess = total_sess - attended_sess
     overall_pct = round(attended_sess / total_sess * 100, 1) if total_sess > 0 else 100.0
 
@@ -407,8 +407,8 @@ def student_attendance():
     sub_att_rows = cur.fetchall()
     subject_attendance = []
     for s in sub_att_rows:
-        tot = s["total"]
-        att = s["attended"]
+        tot = int(s["total"] or 0)
+        att = int(s["attended"] or 0)
         pct = round(att / tot * 100, 1) if tot > 0 else 100.0
         needed = max(0, int((0.75 * tot - att) / 0.25) + 1) if pct < 75.0 and tot > 0 else 0
         subject_attendance.append({

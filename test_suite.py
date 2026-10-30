@@ -232,5 +232,31 @@ class TestScholarPulsePlatform(unittest.TestCase):
         q_after_reopen = one("SELECT status FROM student_queries WHERE reference_code='SP-1001'")
         self.assertEqual(q_after_reopen['status'], 'In Progress')
 
+    def test_student_attendance_calculation_with_shortage(self):
+        """Verify /attendance route renders correctly for students with attendance shortages (no Decimal/float TypeError)."""
+        aditi = one("SELECT id, full_name, username FROM users WHERE username='aditi'")
+        if aditi:
+            with self.client.session_transaction() as sess:
+                sess['user_id'] = aditi['id']
+                sess['name'] = aditi['full_name']
+                sess['username'] = aditi['username']
+                sess['role'] = 'student'
+
+            res = self.client.get('/attendance')
+            self.assertEqual(res.status_code, 200)
+            self.assertIn(b'Attendance', res.data)
+
+        rahul = one("SELECT id, full_name, username FROM users WHERE username='rahul'")
+        if rahul:
+            with self.client.session_transaction() as sess:
+                sess['user_id'] = rahul['id']
+                sess['name'] = rahul['full_name']
+                sess['username'] = rahul['username']
+                sess['role'] = 'student'
+
+            res = self.client.get('/attendance')
+            self.assertEqual(res.status_code, 200)
+            self.assertIn(b'Attendance', res.data)
+
 if __name__ == '__main__':
     unittest.main()

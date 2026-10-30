@@ -18,8 +18,8 @@ def get_student_risk_assessment(cur, student_id):
         WHERE student_id = %s
     """, (student_id,))
     att = cur.fetchone()
-    total_sessions = att["total_sessions"] if att and att["total_sessions"] else 0
-    attended = att["attended"] if att and att["attended"] else 0
+    total_sessions = int(att["total_sessions"] or 0) if att else 0
+    attended = int(att["attended"] or 0) if att else 0
     att_pct = round((attended / total_sessions * 100), 1) if total_sessions > 0 else 100.0
 
     if att_pct < 65:
@@ -120,11 +120,11 @@ def get_student_ai_insights(cur, student_id):
     weak_subjects = [s["subject"] for s in sub_scores if s["avg_pct"] and s["avg_pct"] < 60]
 
     # Attendance classes needed calculation
-    att_pct = risk["attendance_pct"]
+    att_pct = float(risk["attendance_pct"])
     classes_needed = 0
     if att_pct < 75 and risk["total_sessions"] > 0:
         # attended + x / (total + x) >= 0.75 => x >= (0.75*total - attended) / 0.25
-        classes_needed = max(0, int((0.75 * risk["total_sessions"] - risk["attended_sessions"]) / 0.25) + 1)
+        classes_needed = max(0, int((0.75 * float(risk["total_sessions"]) - float(risk["attended_sessions"])) / 0.25) + 1)
 
     # Upcoming examinations
     cur.execute("""
